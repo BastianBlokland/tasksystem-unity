@@ -1,2 +1,3 @@
 # tasksystem
-Prototype for a task system
+
+For learning purposes: a prototype task system
