@@ -2,7 +2,7 @@ using System;
 
 namespace Tasks
 {
-	public class ArrayTaskHandle<T1> : BaseArrayTaskHandle
+	public class ArrayTaskHandle<T1> : BaseTaskHandle
 		where T1 : struct
 	{
 		private readonly T1[] data;
@@ -21,7 +21,7 @@ namespace Tasks
 		}
 	}
 
-	public class ArrayTaskHandle<T1, T2> : BaseArrayTaskHandle
+	public class ArrayTaskHandle<T1, T2> : BaseTaskHandle
 		where T1 : struct
 		where T2 : struct
 	{

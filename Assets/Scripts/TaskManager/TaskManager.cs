@@ -9,30 +9,36 @@ namespace Tasks
 	{
 		private readonly TaskRunner runner = new TaskRunner();
 
-		public ITaskHandle ScheduleArray<T1>(T1[] data, ITask<T1> task, int batchSize = 10, ITaskHandle dependency = null)
-			where T1 : struct
+		public ITaskHandle ScheduleSingle(ITask task, ITaskDependency dependency = null)
 		{
-			ArrayTaskHandle<T1> handle = new ArrayTaskHandle<T1>(data, task, runner);
-			
-			if(dependency == null)
-				handle.Schedule(batchSize);
+			SingleTaskHandle handle = new SingleTaskHandle(task, runner);
+			if(dependency == null || dependency.IsComplete)
+				handle.Schedule(batchSize: 1);
 			else
-				dependency.Completed += () => handle.Schedule(batchSize);
-
+				dependency.Completed += () => handle.Schedule(batchSize: 1);
 			return handle;
 		}
 
-		public ITaskHandle ScheduleArray<T1, T2>(T1[] data1, T2[] data2, ITask<T1, T2> task, int batchSize = 10, ITaskHandle dependency = null)
+		public ITaskHandle ScheduleArray<T1>(T1[] data, ITask<T1> task, int batchSize = 10, ITaskDependency dependency = null)
+			where T1 : struct
+		{
+			ArrayTaskHandle<T1> handle = new ArrayTaskHandle<T1>(data, task, runner);	
+			if(dependency == null || dependency.IsComplete)
+				handle.Schedule(batchSize);
+			else
+				dependency.Completed += () => handle.Schedule(batchSize);
+			return handle;
+		}
+
+		public ITaskHandle ScheduleArray<T1, T2>(T1[] data1, T2[] data2, ITask<T1, T2> task, int batchSize = 10, ITaskDependency dependency = null)
 			where T1 : struct
 			where T2 : struct
 		{
 			ArrayTaskHandle<T1, T2> handle = new ArrayTaskHandle<T1, T2>(data1, data2, task, runner);
-
-			if(dependency == null)
+			if(dependency == null || dependency.IsComplete)
 				handle.Schedule(batchSize);
 			else
 				dependency.Completed += () => handle.Schedule(batchSize);
-
 			return handle;
 		}
 

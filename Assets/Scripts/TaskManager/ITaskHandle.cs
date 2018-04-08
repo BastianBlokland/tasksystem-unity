@@ -2,11 +2,8 @@ using System;
 
 namespace Tasks
 {
-	public interface ITaskHandle
+	public interface ITaskHandle : ITaskDependency
 	{
-		//NOTE: VERY important to realize that this can be called from any thread
-		event Action Completed;
-
 		void Join();
 	}
 }

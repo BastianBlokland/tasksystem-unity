@@ -3,10 +3,12 @@ using System.Threading;
 
 namespace Tasks
 {
-	public abstract class BaseArrayTaskHandle : ITaskHandle, ITaskExecutor
+	public abstract class BaseTaskHandle : ITaskHandle, ITaskExecutor
 	{
 		//NOTE: VERY important to realize that this can be called from any thread
 		public event Action Completed = delegate {};
+
+		public bool IsComplete { get { return isComplete; } }
 
 		private readonly int length;
 		private readonly TaskRunner runner;
@@ -15,7 +17,7 @@ namespace Tasks
 		private volatile bool isComplete;
 		private int tasksLeft;
 
-		public BaseArrayTaskHandle(int length, TaskRunner runner)
+		public BaseTaskHandle(int length, TaskRunner runner)
 		{
 			this.length = length;
 			this.runner = runner;

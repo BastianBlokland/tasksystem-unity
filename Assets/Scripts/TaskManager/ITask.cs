@@ -1,5 +1,10 @@
 ﻿namespace Tasks
 {
+	public interface ITask
+	{
+		void Execute();
+	}
+
 	public interface ITask<T1>
 		where T1 : struct
 	{

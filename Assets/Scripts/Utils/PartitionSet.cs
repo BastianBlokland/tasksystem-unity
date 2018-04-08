@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace Utils
 {
-	public class PartitionSet<T>
+	public class PartitionSet<T> : IDisposable
 		where T : struct
 	{
 		private class Entry
@@ -17,38 +19,59 @@ namespace Utils
 			}
 		}
 
-		public int PartitionCount { get { return entries.Count; } }
-
+		private readonly ReaderWriterLockSlim threadLock = new ReaderWriterLockSlim();
 		private readonly List<Entry> entries = new List<Entry>();
 
 		public void Add(int partition, T data)
 		{
-			Entry entry = Find(partition);
-			if(entry == null)
+			threadLock.EnterWriteLock();
 			{
-				entry = new Entry(partition);
-				entries.Add(entry);
+				Entry entry = Find(partition);
+				if(entry == null)
+				{
+					entry = new Entry(partition);
+					entries.Add(entry);
+				}
+				entry.Data.Add(data);
 			}
-			entry.Data.Add(data);
+			threadLock.ExitWriteLock();
 		}
 
 		public List<T> Get(int partition)
 		{
-			Entry entry = Find(partition);
-			if(entry != null)
-				return entry.Data;
-			return null;
+			Entry entry = null;
+
+			threadLock.EnterReadLock();
+			{
+				entry = Find(partition);
+			}
+			threadLock.ExitReadLock();
+
+			return entry != null ? entry.Data : null;
 		}
 
 		public void Clear()
 		{
-			entries.Clear();
+			threadLock.EnterWriteLock();
+			{
+				entries.Clear();
+			}
+			threadLock.ExitWriteLock();
 		}
 
 		public void ClearData()
 		{
-			for (int i = 0; i < entries.Count; i++)
-				entries[i].Data.Clear();
+			threadLock.EnterWriteLock();
+			{
+				for (int i = 0; i < entries.Count; i++)
+					entries[i].Data.Clear();
+			}
+			threadLock.ExitWriteLock();
+		}
+
+		public void Dispose()
+		{
+			threadLock.Dispose();
 		}
 
 		private Entry Find(int partition)
