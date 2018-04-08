@@ -53,6 +53,10 @@ namespace Sample
 
 		protected void Start()
 		{
+			if(mesh == null) { Debug.LogError("[SampleController] No 'mesh' provided"); return; }
+			if(material == null) { Debug.LogError("[SampleController] No 'material' provided"); return; }
+			if(targetTrans == null) { Debug.LogError("[SampleController] No 'targetTrans' provided"); return; }
+			
 			//Allocate arrays
 			spawnPoints = new Vector2[cubeCount];
 			cubeData = new CubeData[cubeCount];
@@ -82,6 +86,9 @@ namespace Sample
 
 		protected void Update()
 		{
+			if(taskManager == null)
+				return;
+
 			//---> Update target info based on the linked-in transform
 			UpdateTargetInfo();
 
@@ -131,9 +138,12 @@ namespace Sample
 
 		protected void OnDestroy()
 		{
-			taskManager.Dispose();
-			partitionedCubes.Dispose();
-			renderSet.Dispose();
+			if(taskManager != null)
+				taskManager.Dispose();
+			if(partitionedCubes != null)
+				partitionedCubes.Dispose();
+			if(renderSet != null)
+				renderSet.Dispose();
 		}
 
 		private void UpdateTargetInfo()

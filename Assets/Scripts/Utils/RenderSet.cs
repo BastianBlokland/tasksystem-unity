@@ -76,6 +76,11 @@ namespace Utils
 
 		public void Render()
 		{
+			if(mesh == null)
+				throw new Exception("[RenderSet] Unable to render: Mesh is null!");
+			if(material == null)
+				throw new Exception("[RenderSet] Unable to render: Material is null!");
+				
 			threadLock.EnterReadLock();
 			{
 				for (int i = 0; i < chunks.Count; i++)
