@@ -17,11 +17,11 @@ namespace Tasks
 			return handle;
 		}
 
-		public ITaskHandle<T[]> ScheduleBatch<T>(T[] data, ITask<T> task)
+		public ITaskHandle<T[]> ScheduleBatch<T>(T[] data, ITask<T> task, int batchSize = 10)
 			where T : struct, ITaskData
 		{
 			BatchTaskHandle<T> handle = new BatchTaskHandle<T>(data, task, runner);
-			handle.Schedule();
+			handle.Schedule(batchSize);
 			return handle;
 		}
 

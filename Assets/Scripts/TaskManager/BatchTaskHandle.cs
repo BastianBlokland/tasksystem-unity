@@ -21,14 +21,19 @@ namespace Tasks
 			this.runner = runner;			
 		}
 
-		public void Schedule()
+		public void Schedule(int batchSize)
 		{
 			if(isScheduled)
 				throw new Exception("[BatchTaskHandle] Allready scheduled");
 
 			tasksLeft = data.Length;
-			for (int i = 0; i < data.Length; i++)
-				runner.Schedule(this, i);
+			int startOffset = batchSize - 1;
+			for (int i = 0; i < data.Length; i += batchSize)
+			{
+				int start = i;
+				int end = start + startOffset;
+				runner.Schedule(this, start, end >= data.Length ? (data.Length - 1) : end);
+			}
 			isScheduled = true;
 		}
 

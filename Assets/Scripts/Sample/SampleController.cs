@@ -7,11 +7,12 @@ namespace Sample
 {
 	public class SampleController : MonoBehaviour
 	{
-		private const int CUBE_COUNT = 12500;
+		private const int CUBE_COUNT = 15000;
 
 		[SerializeField] private Mesh mesh;
 		[SerializeField] private Material material;
 		[SerializeField] private Transform targetTrans;
+		[SerializeField] private int batchSize = 10;
 
 		private readonly CubeData[] cubeData = new CubeData[CUBE_COUNT];
 		private readonly PartitionSet<CubeData> partitionedData = new PartitionSet<CubeData>();
@@ -79,7 +80,7 @@ namespace Sample
 				partitioner: partitioner,
 				others: partitionedData
 			);
-			updateCubeTask = taskManager.ScheduleBatch(cubeData, moveTask);
+			updateCubeTask = taskManager.ScheduleBatch(cubeData, moveTask, batchSize);
 		}
 
 		protected void OnDestroy()

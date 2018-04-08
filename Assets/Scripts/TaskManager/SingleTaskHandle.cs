@@ -25,7 +25,7 @@ namespace Tasks
 			if(isScheduled)
 				throw new Exception("[BatchTaskHandle] Allready scheduled");
 
-			runner.Schedule(this, -1);
+			runner.Schedule(this, 1, 1);
 			isScheduled = true;
 		}
 

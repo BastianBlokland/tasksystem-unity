@@ -3,17 +3,20 @@ namespace Tasks
 	public struct TaskActionInfo
 	{
 		private readonly ITaskExecutor executor;
-		private readonly int index;
+		private readonly int minIndex;
+		private readonly int maxIndex;
 
-		public TaskActionInfo(ITaskExecutor executor, int index)
+		public TaskActionInfo(ITaskExecutor executor, int minIndex, int maxIndex)
 		{
 			this.executor = executor;
-			this.index = index;
+			this.minIndex = minIndex;
+			this.maxIndex = maxIndex;
 		}
 
 		public void Execute()
 		{
-			executor.ExecuteElement(index);
+			for (int i = minIndex; i <= maxIndex; i++)
+				executor.ExecuteElement(i);
 		}
 	}
 }
