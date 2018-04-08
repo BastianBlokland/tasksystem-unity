@@ -6,7 +6,7 @@ namespace Sample
 {
 	public class SampleController : MonoBehaviour
 	{
-		private const int CUBE_COUNT = 10000;
+		private const int CUBE_COUNT = 1500;
 
 		[SerializeField] private Mesh mesh;
 		[SerializeField] private Material material;
@@ -28,18 +28,28 @@ namespace Sample
 
 		protected void Update()
 		{
-			MoveCubeTask moveTask = new MoveCubeTask(acceleration: 10f, targetSpeed: 25f, deltaTime: Time.deltaTime);
-
-			Vector3 targetPosition = targetTrans.position;
+			//Update the data
+			Vector2 targetPosition = new Vector2(targetTrans.position.x, targetTrans.position.z);
 			for (int i = 0; i < CUBE_COUNT; i++)
 			{
-				//Get the new data from the previous task
+				//Get the data from the previous task
 				if(moveTasks[i] != null)
 					cubeData[i] = moveTasks[i].Join();
 
 				//Update target
 				cubeData[i].Target = targetPosition;
+			}
 
+			//Schedule the tasks
+			MoveCubeTask moveTask = new MoveCubeTask
+			(
+				acceleration: 20f,
+				targetSpeed: 25f,
+				deltaTime: Time.deltaTime,
+				others: cubeData
+			);
+			for (int i = 0; i < CUBE_COUNT; i++)
+			{
 				//Schedule a new move
 				moveTasks[i] = taskManager.ScheduleTask(moveTask, cubeData[i]);
 			}
@@ -50,8 +60,8 @@ namespace Sample
 				int chunkSize = (ci + renderMatrices.Length) >= cubeData.Length ? (cubeData.Length - ci) : renderMatrices.Length;
 				//Prepare the 'chunk' for rendering
 				for (int mi = 0; mi < chunkSize; mi++)
-					renderMatrices[mi] =	Matrix4x4.Translate(cubeData[ci + mi].Position) * 
-											Matrix4x4.Rotate(cubeData[ci + mi].Rotation);
+					renderMatrices[mi] = CreateMatrix(cubeData[ci + mi]);
+
 				//Render chunk
 				Graphics.DrawMeshInstanced(mesh, 0, material, renderMatrices, chunkSize);
 			}
@@ -66,11 +76,26 @@ namespace Sample
 		{
 			cubeData[id] = new CubeData
 			{
-				Position = new Vector3(Random.Range(-100f, 100f), 0f, Random.Range(-100f, 100f)),
-				Velocity = Vector3.zero,
-				Rotation = Quaternion.identity,
-				Target = Vector3.zero
+				ID = id,
+				Position = new Vector2(Random.Range(-100f, 100f), Random.Range(-100f, 100f)),
+				Velocity = Vector2.zero,
+				Rotation = 0f,
+				Target = Vector2.zero
 			};
+		}
+
+		private Matrix4x4 CreateMatrix(CubeData data)
+		{
+			float rotInRad = data.Rotation * Mathf.Deg2Rad;
+			float cos = Mathf.Cos(rotInRad);
+			float sin = Mathf.Sin(rotInRad);
+			return new Matrix4x4
+			(
+				column0: new Vector4(cos, 0f, -sin, 0f),
+				column1: new Vector4(0f, 1f, 0f, 0f),
+				column2: new Vector4(sin, 0f, cos, 0f),
+				column3: new Vector4(data.Position.x, 0f, data.Position.y, 1f)
+			);
 		}
 	}
 }

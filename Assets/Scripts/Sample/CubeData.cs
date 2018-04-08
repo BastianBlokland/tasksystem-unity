@@ -5,9 +5,10 @@ namespace Sample
 {
 	public struct CubeData : ITaskData
 	{
-		public Vector3 Position;
-		public Vector3 Velocity;
-		public Quaternion Rotation;
-		public Vector3 Target;
+		public int ID;
+		public Vector2 Position;
+		public Vector2 Velocity;
+		public float Rotation;
+		public Vector2 Target;
 	}
 }
