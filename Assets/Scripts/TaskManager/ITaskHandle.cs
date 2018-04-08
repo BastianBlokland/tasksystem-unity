@@ -1,7 +1,7 @@
 namespace Tasks
 {
-	public interface ITaskHandle<T>
+	public interface ITaskHandle
 	{
-		T Join();
+		void Join();
 	}
 }

@@ -9,18 +9,19 @@ namespace Tasks
 	{
 		private readonly TaskRunner runner = new TaskRunner();
 
-		public ITaskHandle<T> Schedule<T>(T data, ITask<T> task)
-			where T : struct
+		public ITaskHandle ScheduleArray<T1>(T1[] data, ITask<T1> task, int batchSize = 10)
+			where T1 : struct
 		{
-			SingleTaskHandle<T> handle = new SingleTaskHandle<T>(data, task, runner);
-			handle.Schedule();
+			ArrayTaskHandle<T1> handle = new ArrayTaskHandle<T1>(data, task, runner);
+			handle.Schedule(batchSize);
 			return handle;
 		}
 
-		public ITaskHandle<T[]> ScheduleBatch<T>(T[] data, ITask<T> task, int batchSize = 10)
-			where T : struct
+		public ITaskHandle ScheduleArray<T1, T2>(T1[] data1, T2[] data2, ITask<T1, T2> task, int batchSize = 10)
+			where T1 : struct
+			where T2 : struct
 		{
-			BatchTaskHandle<T> handle = new BatchTaskHandle<T>(data, task, runner);
+			ArrayTaskHandle<T1, T2> handle = new ArrayTaskHandle<T1, T2>(data1, data2, task, runner);
 			handle.Schedule(batchSize);
 			return handle;
 		}

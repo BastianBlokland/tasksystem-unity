@@ -17,7 +17,7 @@ namespace Sample
 		private readonly CubeData[] cubeData = new CubeData[CUBE_COUNT];
 		private readonly PartitionSet<CubeData> partitionedData = new PartitionSet<CubeData>();
 	
-		private ITaskHandle<CubeData[]> updateCubeTask;
+		private ITaskHandle updateCubeTask;
 
 		private Vector2 lastTargetPosition;
 		private GridPartitioner partitioner;
@@ -72,7 +72,7 @@ namespace Sample
 				partitioner: partitioner,
 				others: partitionedData
 			);
-			updateCubeTask = taskManager.ScheduleBatch(cubeData, moveTask, batchSize);
+			updateCubeTask = taskManager.ScheduleArray(cubeData, moveTask, batchSize);
 
 			renderSet.Render();
 		}
