@@ -4,29 +4,29 @@ using System.Threading;
 
 namespace Tasks
 {
-	public class ActionRunner : IDisposable
+	public class TaskRunner : IDisposable
 	{
 		//----> Syncing data
 		private volatile bool abort;
-		private readonly ConcurrentQueue<Action> actionQueue = new ConcurrentQueue<Action>();
+		private readonly ConcurrentQueue<TaskActionInfo> actionQueue = new ConcurrentQueue<TaskActionInfo>();
 
-		public ActionRunner(int executorCount = 7)
+		public TaskRunner(int executorCount = 7)
 		{
 			for(int i = 0; i < executorCount; i++)
 				new Thread(ThreadExecutor).Start();
 		}
 
-		public void Schedule(Action action)
+		public void Schedule(ITaskExecutor executor, int index)
 		{
-			actionQueue.Enqueue(action);
+			actionQueue.Enqueue(new TaskActionInfo(executor, index));
 		}
 
 		public void Help()
 		{
-			Action action;
+			TaskActionInfo action;
 			if(actionQueue.TryDequeue(out action))
 			{
-				try { action(); }
+				try { action.Execute(); }
 				catch(Exception) { }
 			}
 		}
@@ -41,10 +41,10 @@ namespace Tasks
 		{
 			while(!abort)
 			{
-				Action action;
+				TaskActionInfo action;
 				if(actionQueue.TryDequeue(out action))
 				{
-					try { action(); }
+					try { action.Execute(); }
 					catch(Exception) { }
 				}
 				else

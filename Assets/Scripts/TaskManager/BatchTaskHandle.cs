@@ -3,18 +3,18 @@ using System.Threading;
 
 namespace Tasks
 {
-	public class BatchTaskHandle<T> : ITaskHandle<T[]>
+	public class BatchTaskHandle<T> : ITaskHandle<T[]>, ITaskExecutor
 		where T : struct, ITaskData
 	{
 		private readonly T[] data;
 		private readonly ITask<T> task;
-		private readonly ActionRunner runner;
+		private readonly TaskRunner runner;
 
 		private bool isScheduled;
 		private volatile bool isComplete;
 		private int tasksLeft;
 
-		public BatchTaskHandle(T[] data, ITask<T> task, ActionRunner runner)
+		public BatchTaskHandle(T[] data, ITask<T> task, TaskRunner runner)
 		{
 			this.data = data;
 			this.task = task;
@@ -28,10 +28,7 @@ namespace Tasks
 
 			tasksLeft = data.Length;
 			for (int i = 0; i < data.Length; i++)
-			{
-				int index = i;
-				runner.Schedule(() => TreadedExecuteElement(index));
-			}
+				runner.Schedule(this, i);
 			isScheduled = true;
 		}
 
@@ -47,7 +44,7 @@ namespace Tasks
 		}
 
 		//----> RUNNING ON SEPARATE THREAD
-		private void TreadedExecuteElement(int index)
+		public void ExecuteElement(int index)
 		{
 			try { task.Execute(ref data[index]); }
 			catch(Exception) { }

@@ -7,12 +7,12 @@ namespace Tasks
 {
 	public class TaskManager : IDisposable
 	{
-		private readonly ActionRunner actionRunner = new ActionRunner();
+		private readonly TaskRunner runner = new TaskRunner();
 
 		public ITaskHandle<T> Schedule<T>(T data, ITask<T> task)
 			where T : struct, ITaskData
 		{
-			SingleTaskHandle<T> handle = new SingleTaskHandle<T>(data, task, actionRunner);
+			SingleTaskHandle<T> handle = new SingleTaskHandle<T>(data, task, runner);
 			handle.Schedule();
 			return handle;
 		}
@@ -20,14 +20,14 @@ namespace Tasks
 		public ITaskHandle<T[]> ScheduleBatch<T>(T[] data, ITask<T> task)
 			where T : struct, ITaskData
 		{
-			BatchTaskHandle<T> handle = new BatchTaskHandle<T>(data, task, actionRunner);
+			BatchTaskHandle<T> handle = new BatchTaskHandle<T>(data, task, runner);
 			handle.Schedule();
 			return handle;
 		}
 
 		public void Dispose()
 		{
-			actionRunner.Dispose();
+			runner.Dispose();
 		}
 	}
 }
