@@ -6,17 +6,17 @@ namespace Sample
 {
 	public class SampleController : MonoBehaviour
 	{
-		private const int CUBE_COUNT = 5000;
+		private const int CUBE_COUNT = 10000;
 
-		[SerializeField] private GameObject prefab;
+		[SerializeField] private Mesh mesh;
+		[SerializeField] private Material material;
 		[SerializeField] private Transform targetTrans;
 
-		private readonly Transform[] graphics = new Transform[CUBE_COUNT];
 		private readonly CubeData[] cubeData = new CubeData[CUBE_COUNT];
 		private readonly ITaskHandle<CubeData>[] moveTasks = new ITaskHandle<CubeData>[CUBE_COUNT];
+		private readonly Matrix4x4[] renderMatrices = new Matrix4x4[1023]; //1023, is the max render count for a single call (https://docs.unity3d.com/ScriptReference/Graphics.DrawMeshInstanced.html)
 
 		private TaskManager taskManager;
-		private int cubeIDCounter;
 
 		protected void Start()
 		{
@@ -37,14 +37,23 @@ namespace Sample
 				if(moveTasks[i] != null)
 					cubeData[i] = moveTasks[i].Join();
 
-				//Apply the data
-				ApplyData(i);
-
 				//Update target
 				cubeData[i].Target = targetPosition;
 
 				//Schedule a new move
 				moveTasks[i] = taskManager.ScheduleTask(moveTask, cubeData[i]);
+			}
+
+			//Render the cubes
+			for (int ci = 0; ci < cubeData.Length; ci += renderMatrices.Length) //Render in chunks of '1023'
+			{
+				int chunkSize = (ci + renderMatrices.Length) >= cubeData.Length ? (cubeData.Length - ci) : renderMatrices.Length;
+				//Prepare the 'chunk' for rendering
+				for (int mi = 0; mi < chunkSize; mi++)
+					renderMatrices[mi] =	Matrix4x4.Translate(cubeData[ci + mi].Position) * 
+											Matrix4x4.Rotate(cubeData[ci + mi].Rotation);
+				//Render chunk
+				Graphics.DrawMeshInstanced(mesh, 0, material, renderMatrices, chunkSize);
 			}
 		}
 
@@ -55,7 +64,6 @@ namespace Sample
 
 		private void SpawnCube(int id)
 		{
-			graphics[id] = GameObject.Instantiate(prefab).transform;
 			cubeData[id] = new CubeData
 			{
 				Position = new Vector3(Random.Range(-100f, 100f), 0f, Random.Range(-100f, 100f)),
@@ -63,13 +71,6 @@ namespace Sample
 				Rotation = Quaternion.identity,
 				Target = Vector3.zero
 			};
-			ApplyData(id);
-		}
-
-		private void ApplyData(int id)
-		{
-			graphics[id].position = cubeData[id].Position;
-			graphics[id].rotation = cubeData[id].Rotation;
 		}
 	}
 }
