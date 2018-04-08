@@ -28,7 +28,7 @@ namespace Sample
 
 		protected void Update()
 		{
-			MoveCubeTask moveTask = new MoveCubeTask(acceleration: 5f, targetSpeed: 15f, deltaTime: Time.deltaTime);
+			MoveCubeTask moveTask = new MoveCubeTask(acceleration: 10f, targetSpeed: 25f, deltaTime: Time.deltaTime);
 
 			Vector3 targetPosition = targetTrans.position;
 			for (int i = 0; i < CUBE_COUNT; i++)
