@@ -16,17 +16,18 @@ namespace Sample
 
 		private readonly CubeData[] cubeData = new CubeData[CUBE_COUNT];
 		private readonly PartitionSet<CubeData> partitionedData = new PartitionSet<CubeData>();
-		private readonly Matrix4x4[] renderMatrices = new Matrix4x4[1023]; //1023, is the max render count for a single call (https://docs.unity3d.com/ScriptReference/Graphics.DrawMeshInstanced.html)
-		
+	
 		private ITaskHandle<CubeData[]> updateCubeTask;
 
 		private Vector2 lastTargetPosition;
 		private GridPartitioner partitioner;
 		private TaskManager taskManager;
+		private RenderSet renderSet;
 
 		protected void Start()
 		{
 			taskManager = new TaskManager();
+			renderSet = new RenderSet(mesh, material);
 
 			for (int i = 0; i < CUBE_COUNT; i++)
 				SpawnCube(i);
@@ -43,21 +44,12 @@ namespace Sample
 			if(updateCubeTask != null)
 				updateCubeTask.Join();
 
-			//Render the cubes
-			for (int ci = 0; ci < cubeData.Length; ci += renderMatrices.Length) //Render in chunks of '1023'
-			{
-				int chunkSize = (ci + renderMatrices.Length) >= cubeData.Length ? (cubeData.Length - ci) : renderMatrices.Length;
-				//Prepare the 'chunk' for rendering
-				for (int mi = 0; mi < chunkSize; mi++)
-					renderMatrices[mi] = CreateMatrix(cubeData[ci + mi]);
-
-				//Render chunk
-				Graphics.DrawMeshInstanced(mesh, 0, material, renderMatrices, chunkSize);
-			}
-
-			//Respawn cubes if necessary
+			//Handle the new cubedata
+			renderSet.Clear();
 			for (int i = 0; i < CUBE_COUNT; i++)
 			{
+				renderSet.Add(CreateMatrix(cubeData[i]));
+
 				if(cubeData[i].Position.sqrMagnitude > (200f * 200f))
 					SpawnCube(i);
 			}
@@ -81,6 +73,8 @@ namespace Sample
 				others: partitionedData
 			);
 			updateCubeTask = taskManager.ScheduleBatch(cubeData, moveTask, batchSize);
+
+			renderSet.Render();
 		}
 
 		protected void OnDestroy()
