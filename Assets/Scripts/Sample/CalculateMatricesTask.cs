@@ -5,7 +5,7 @@ using Utils;
 
 namespace Sample
 {
-	public struct CalculateMatrices : ITask<CubeData, Matrix4x4>
+	public class CalculateMatricesTask : ITask<CubeData, Matrix4x4>
 	{
 		public void Execute(ref CubeData data, ref Matrix4x4 matrix)
 		{

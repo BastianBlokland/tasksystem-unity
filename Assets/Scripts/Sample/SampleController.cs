@@ -14,11 +14,14 @@ namespace Sample
 		[SerializeField] private Transform targetTrans;
 		[SerializeField] private int batchSize = 10;
 
+		private readonly Vector2[] spawnPoints = new Vector2[CUBE_COUNT];
 		private readonly CubeData[] cubeData = new CubeData[CUBE_COUNT];
 		private readonly Matrix4x4[] cubeMatrices = new Matrix4x4[CUBE_COUNT];
 		private readonly PartitionSet<CubeData> partitionedData = new PartitionSet<CubeData>();
 	
-		private ITaskHandle updateCubeTask;
+		private ITaskHandle updateCubeHandle;
+		private ITaskHandle calculateMatricesHandle;
+		private ITaskHandle respawnCubesHandle;
 
 		private Vector2 lastTargetPosition;
 		private GridPartitioner partitioner;
@@ -31,7 +34,10 @@ namespace Sample
 			renderSet = new RenderSet(mesh, material);
 
 			for (int i = 0; i < CUBE_COUNT; i++)
+			{
+				spawnPoints[i] = new Vector2(Random.Range(-100f, 100f), Random.Range(-100f, 100f));
 				SpawnCube(i);
+			}
 		}
 
 		protected void Update()
@@ -41,25 +47,18 @@ namespace Sample
 			Vector2 targetVelocity = targetDiff == Vector2.zero ? Vector2.zero : targetDiff / Time.deltaTime;
 			lastTargetPosition = targetPosition;
 
-			//Observer the results
-			if(updateCubeTask != null)
-				updateCubeTask.Join();
-
-			//Calculate the new matrices
-			ITaskHandle calculateMatricesTask = taskManager.ScheduleArray(cubeData, cubeMatrices, new CalculateMatrices());
-			calculateMatricesTask.Join();
+			//Make sure all handles have been completed
+			if(updateCubeHandle != null)
+				updateCubeHandle.Join();
+			if(calculateMatricesHandle != null)
+				calculateMatricesHandle.Join();
+			if(respawnCubesHandle != null)
+				respawnCubesHandle.Join();
 
 			//Prepare the data for rendering
 			renderSet.Clear();
 			for (int i = 0; i < CUBE_COUNT; i++)
 				renderSet.Add(cubeMatrices[i]);
-
-			//Respawn the cubes if too far away
-			for (int i = 0; i < CUBE_COUNT; i++)
-			{
-				if(cubeData[i].Position.sqrMagnitude > (200f * 200f))
-					SpawnCube(i);
-			}
 
 			//Update partitioned data
 			partitioner = new GridPartitioner(Random.Range(7f, 10f)); //Use a 'random' partition size to make the 'grid' less noticeable
@@ -79,7 +78,9 @@ namespace Sample
 				partitioner: partitioner,
 				others: partitionedData
 			);
-			updateCubeTask = taskManager.ScheduleArray(cubeData, moveTask, batchSize);
+			updateCubeHandle = taskManager.ScheduleArray(cubeData, moveTask, batchSize);
+			calculateMatricesHandle = taskManager.ScheduleArray(cubeData, cubeMatrices, new CalculateMatricesTask(), batchSize, updateCubeHandle);
+			respawnCubesHandle = taskManager.ScheduleArray(cubeData, new RespawnCubesTask(spawnPoints), batchSize, updateCubeHandle);
 
 			renderSet.Render();
 		}
@@ -94,7 +95,7 @@ namespace Sample
 			cubeData[id] = new CubeData
 			{
 				ID = id,
-				Position = new Vector2(Random.Range(-100f, 100f), Random.Range(-100f, 100f)),
+				Position = spawnPoints[id],
 				Velocity = Vector2.zero,
 				Rotation = 0f
 			};

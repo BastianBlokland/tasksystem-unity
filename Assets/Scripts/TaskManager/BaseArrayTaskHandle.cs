@@ -5,6 +5,9 @@ namespace Tasks
 {
 	public abstract class BaseArrayTaskHandle : ITaskHandle, ITaskExecutor
 	{
+		//NOTE: VERY important to realize that this can be called from any thread
+		public event Action Completed = delegate {};
+
 		private readonly int length;
 		private readonly TaskRunner runner;
 
@@ -36,9 +39,6 @@ namespace Tasks
 
 		public void Join()
 		{
-			if(!isScheduled)
-				throw new Exception("[BatchTaskHandle] Has not been scheduled yet");
-
 			while(!isComplete)
 				runner.Help();
 		}
@@ -50,7 +50,10 @@ namespace Tasks
 			catch(Exception) { }
 
 			if(Interlocked.Decrement(ref tasksLeft) == 0)
+			{
 				isComplete = true;
+				Completed();
+			}
 		}
 		//----> RUNNING ON SEPARATE THREAD
 

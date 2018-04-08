@@ -5,7 +5,7 @@ using Utils;
 
 namespace Sample
 {
-	public struct MoveCubeTask : ITask<CubeData>
+	public class MoveCubeTask : ITask<CubeData>
 	{
 		const float CUBE_RADIUS = 1.25f;
 		const float CUBE_SEPERATION_FORCE = 2f;
