@@ -1,21 +1,25 @@
 using System.Collections.Generic;
 using Tasks;
+using Utils;
 using UnityEngine;
 
 namespace Sample
 {
 	public class SampleController : MonoBehaviour
 	{
-		private const int CUBE_COUNT = 1500;
+		private const int CUBE_COUNT = 10000;
 
 		[SerializeField] private Mesh mesh;
 		[SerializeField] private Material material;
 		[SerializeField] private Transform targetTrans;
 
 		private readonly CubeData[] cubeData = new CubeData[CUBE_COUNT];
+		private readonly PartitionSet<CubeData> partitionedData = new PartitionSet<CubeData>();
 		private readonly ITaskHandle<CubeData>[] moveTasks = new ITaskHandle<CubeData>[CUBE_COUNT];
 		private readonly Matrix4x4[] renderMatrices = new Matrix4x4[1023]; //1023, is the max render count for a single call (https://docs.unity3d.com/ScriptReference/Graphics.DrawMeshInstanced.html)
 
+		private Vector2 lastTargetPosition;
+		private GridPartitioner partitioner;
 		private TaskManager taskManager;
 
 		protected void Start()
@@ -28,25 +32,39 @@ namespace Sample
 
 		protected void Update()
 		{
-			//Update the data
 			Vector2 targetPosition = new Vector2(targetTrans.position.x, targetTrans.position.z);
+			Vector2 targetDiff = targetPosition - lastTargetPosition;
+			Vector2 targetVelocity = targetDiff == Vector2.zero ? Vector2.zero : targetDiff / Time.deltaTime;
+			lastTargetPosition = targetPosition;
+
+			//Get the new cube-data from the previous tasks
 			for (int i = 0; i < CUBE_COUNT; i++)
 			{
 				//Get the data from the previous task
 				if(moveTasks[i] != null)
 					cubeData[i] = moveTasks[i].Join();
 
-				//Update target
-				cubeData[i].Target = targetPosition;
+				if(cubeData[i].Position.sqrMagnitude > (200f * 200f))
+					SpawnCube(i);
+			}
+
+			//Update partitioned data
+			partitioner = new GridPartitioner(Random.Range(10f, 15f)); //Use a 'random' partition size to make the 'grid' less noticeable
+			partitionedData.Clear();
+			for (int i = 0; i < CUBE_COUNT; i++)
+			{
+				int partition = partitioner.Partition(cubeData[i].Position);
+				partitionedData.Add(partition, cubeData[i]);
 			}
 
 			//Schedule the tasks
 			MoveCubeTask moveTask = new MoveCubeTask
 			(
-				acceleration: 20f,
-				targetSpeed: 25f,
 				deltaTime: Time.deltaTime,
-				others: cubeData
+				targetPosition: targetPosition,
+				targetVelocity: targetVelocity,
+				partitioner: partitioner,
+				others: partitionedData
 			);
 			for (int i = 0; i < CUBE_COUNT; i++)
 			{
@@ -79,8 +97,7 @@ namespace Sample
 				ID = id,
 				Position = new Vector2(Random.Range(-100f, 100f), Random.Range(-100f, 100f)),
 				Velocity = Vector2.zero,
-				Rotation = 0f,
-				Target = Vector2.zero
+				Rotation = 0f
 			};
 		}
 

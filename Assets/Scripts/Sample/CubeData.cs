@@ -9,6 +9,5 @@ namespace Sample
 		public Vector2 Position;
 		public Vector2 Velocity;
 		public float Rotation;
-		public Vector2 Target;
 	}
 }
