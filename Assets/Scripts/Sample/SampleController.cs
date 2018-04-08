@@ -16,13 +16,13 @@ namespace Sample
 		[SerializeField] private int cubeCount = 35000;
 		[SerializeField] private float minInitialSpawnPoint = -100f;
 		[SerializeField] private float maxInitialSpawnPoint = 100f;
-		[SerializeField] private float minPartitionSize = 3.5f;
-		[SerializeField] private float maxPartitionSize = 5f;
+		[SerializeField] private float minPartitionSize = 3f;
+		[SerializeField] private float maxPartitionSize = 4f;
 		[SerializeField] private float cubeRadius = 1.25f;
 		[SerializeField] private float cubeSeperationForce = 2f;
 		[SerializeField] private float cubeVeloInheritance = .75f;
 		[SerializeField] private float targetRadius = 5f;
-		[SerializeField] private float targetSeperationForce = 10f;
+		[SerializeField] private float targetSeperationForce = 15f;
 		[SerializeField] private float targetVeloInheritance = 1f;
 		[SerializeField] private float maxDistanceBeforeRespawn = 200f;
 

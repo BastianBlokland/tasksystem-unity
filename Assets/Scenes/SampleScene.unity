@@ -367,14 +367,14 @@ MonoBehaviour:
   cubeCount: 35000
   minInitialSpawnPoint: -125
   maxInitialSpawnPoint: 125
-  minPartitionSize: 3.5
-  maxPartitionSize: 5
+  minPartitionSize: 3
+  maxPartitionSize: 4
   cubeRadius: 1.25
   cubeSeperationForce: 1
   cubeVeloInheritance: 0.6
   targetRadius: 5
-  targetSeperationForce: 10
-  targetVeloInheritance: 2
+  targetSeperationForce: 15
+  targetVeloInheritance: 1
   maxDistanceBeforeRespawn: 200
 --- !u!4 &1249463138
 Transform:

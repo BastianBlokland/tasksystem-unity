@@ -8,46 +8,35 @@ namespace Utils
 	public class PartitionSet<T> : IDisposable
 		where T : struct
 	{
-		private class Entry
-		{
-			public readonly int Partition;
-			public readonly List<T> Data = new List<T>();
-
-			public Entry(int partition)
-			{
-				Partition = partition;
-			}
-		}
-
 		private readonly ReaderWriterLockSlim threadLock = new ReaderWriterLockSlim();
-		private readonly List<Entry> entries = new List<Entry>();
+		private readonly Dictionary<int, List<T>> entries = new Dictionary<int, List<T>>();
 
 		public void Add(int partition, T data)
 		{
 			threadLock.EnterWriteLock();
 			{
-				Entry entry = Find(partition);
-				if(entry == null)
+				List<T> list;
+				if(!entries.TryGetValue(partition, out list))
 				{
-					entry = new Entry(partition);
-					entries.Add(entry);
+					list = new List<T>();
+					entries.Add(partition, list);
 				}
-				entry.Data.Add(data);
+				list.Add(data);
 			}
 			threadLock.ExitWriteLock();
 		}
 
 		public List<T> Get(int partition)
 		{
-			Entry entry = null;
+			List<T> result = null;
 
 			threadLock.EnterReadLock();
 			{
-				entry = Find(partition);
+				entries.TryGetValue(partition, out result);
 			}
 			threadLock.ExitReadLock();
 
-			return entry != null ? entry.Data : null;
+			return result;
 		}
 
 		public void Clear()
@@ -63,8 +52,9 @@ namespace Utils
 		{
 			threadLock.EnterWriteLock();
 			{
-				for (int i = 0; i < entries.Count; i++)
-					entries[i].Data.Clear();
+				Dictionary<int, List<T>>.Enumerator enumerator = entries.GetEnumerator();
+				while(enumerator.MoveNext())
+					enumerator.Current.Value.Clear();
 			}
 			threadLock.ExitWriteLock();
 		}
@@ -72,16 +62,6 @@ namespace Utils
 		public void Dispose()
 		{
 			threadLock.Dispose();
-		}
-
-		private Entry Find(int partition)
-		{
-			for (int i = 0; i < entries.Count; i++)
-			{
-				if(entries[i].Partition == partition)
-					return entries[i];
-			}
-			return null;
 		}
 	}
 }
