@@ -5,12 +5,12 @@ using Utils;
 
 namespace Sample
 {
-	public class PartitionCubesTask : ITask<CubeData>
+	public class PartitionCubeTask : ITask<CubeData>
 	{
 		private readonly PartitionSet<CubeData> partitionSet;
 		private readonly GridPartitioner partitioner;
 
-		public PartitionCubesTask(PartitionSet<CubeData> partitionSet, GridPartitioner partitioner)
+		public PartitionCubeTask(PartitionSet<CubeData> partitionSet, GridPartitioner partitioner)
 		{
 			this.partitionSet = partitionSet;
 			this.partitioner = partitioner;

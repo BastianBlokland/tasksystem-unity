@@ -4,9 +4,15 @@ namespace Utils
 {
 	public class GridPartitioner
 	{
-		private readonly float partitionSize;
+		public float PartitionSize
+		{
+			get { return partitionSize; }
+			set { partitionSize = value; }
+		}
 
-		public GridPartitioner(float partitionSize)
+		private float partitionSize;
+
+		public GridPartitioner(float partitionSize = 10)
 		{
 			this.partitionSize = partitionSize;
 		}

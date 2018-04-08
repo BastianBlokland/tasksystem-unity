@@ -10,7 +10,7 @@ namespace Tasks
 		private volatile bool abort;
 		private readonly ConcurrentQueue<TaskActionInfo> actionQueue = new ConcurrentQueue<TaskActionInfo>();
 
-		public TaskRunner(int executorCount = 7)
+		public TaskRunner(int executorCount)
 		{
 			for(int i = 0; i < executorCount; i++)
 				new Thread(ThreadExecutor).Start();

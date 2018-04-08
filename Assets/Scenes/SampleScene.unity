@@ -362,6 +362,20 @@ MonoBehaviour:
   mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   material: {fileID: 2100000, guid: cffd92310e1b844d7a51a4d639a761c6, type: 2}
   targetTrans: {fileID: 1592471118}
+  executorCount: 7
+  batchSize: 50
+  cubeCount: 35000
+  minInitialSpawnPoint: -125
+  maxInitialSpawnPoint: 125
+  minPartitionSize: 3.5
+  maxPartitionSize: 5
+  cubeRadius: 1.25
+  cubeSeperationForce: 1
+  cubeVeloInheritance: 0.6
+  targetRadius: 5
+  targetSeperationForce: 10
+  targetVeloInheritance: 2
+  maxDistanceBeforeRespawn: 200
 --- !u!4 &1249463138
 Transform:
   m_ObjectHideFlags: 0

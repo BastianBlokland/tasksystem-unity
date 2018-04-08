@@ -26,6 +26,12 @@ namespace Tasks
 				dependencies[i].Completed += SingleDependencyComplete;
 		}
 
+		public void Join()
+		{
+			for (int i = 0; i < dependencies.Length; i++)
+				dependencies[i].Join();
+		}
+
 		private void SingleDependencyComplete()
 		{
 			//Check if the entire check is complete, if so: Fire our completed event

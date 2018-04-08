@@ -8,5 +8,7 @@ namespace Tasks
 		event Action Completed;
 
 		bool IsComplete { get; }
+
+		void Join();
 	}	
 }

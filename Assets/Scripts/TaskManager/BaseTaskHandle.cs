@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace Tasks
 {
-	public abstract class BaseTaskHandle : ITaskHandle, ITaskExecutor
+	public abstract class BaseTaskHandle : ITaskDependency, ITaskExecutor
 	{
 		//NOTE: VERY important to realize that this can be called from any thread
 		public event Action Completed = delegate {};

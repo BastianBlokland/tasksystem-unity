@@ -5,28 +5,26 @@ using Utils;
 
 namespace Sample
 {
-	public class RespawnCubesTask : ITask<CubeData>
+	public class RespawnCubeTask : ITask<CubeData>
 	{
-		private const float MAX_DISTANCE = 200f;
-		private const float MAX_DISTANCE_SQR = MAX_DISTANCE * MAX_DISTANCE;
+		public float MaxDistance = 200f;
 
 		private readonly Vector2[] spawnPoints;
 
-		public RespawnCubesTask(Vector2[] spawnPoints)
+		public RespawnCubeTask(Vector2[] spawnPoints)
 		{
 			this.spawnPoints = spawnPoints;
 		}
 
 		public void Execute(ref CubeData data)
 		{
-			if(data.Position.sqrMagnitude > MAX_DISTANCE_SQR)
+			if(data.Position.sqrMagnitude > MaxDistance * MaxDistance)
 			{
 				data = new CubeData
 				{
 					ID = data.ID,
 					Position = spawnPoints[data.ID],
-					Velocity = Vector2.zero,
-					Rotation = 0f
+					Velocity = Vector2.zero
 				};
 			}	
 		}

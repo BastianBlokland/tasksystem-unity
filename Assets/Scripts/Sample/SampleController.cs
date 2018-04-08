@@ -7,77 +7,126 @@ namespace Sample
 {
 	public class SampleController : MonoBehaviour
 	{
-		private const int CUBE_COUNT = 20000;
-
+		//---> Config
 		[SerializeField] private Mesh mesh;
 		[SerializeField] private Material material;
 		[SerializeField] private Transform targetTrans;
-		[SerializeField] private int batchSize = 10;
+		[SerializeField] private int executorCount = 7;
+		[SerializeField] private int batchSize = 50;
+		[SerializeField] private int cubeCount = 35000;
+		[SerializeField] private float minInitialSpawnPoint = -100f;
+		[SerializeField] private float maxInitialSpawnPoint = 100f;
+		[SerializeField] private float minPartitionSize = 3.5f;
+		[SerializeField] private float maxPartitionSize = 5f;
+		[SerializeField] private float cubeRadius = 1.25f;
+		[SerializeField] private float cubeSeperationForce = 2f;
+		[SerializeField] private float cubeVeloInheritance = .75f;
+		[SerializeField] private float targetRadius = 5f;
+		[SerializeField] private float targetSeperationForce = 10f;
+		[SerializeField] private float targetVeloInheritance = 1f;
+		[SerializeField] private float maxDistanceBeforeRespawn = 200f;
 
-		private readonly Vector2[] spawnPoints = new Vector2[CUBE_COUNT];
-		private readonly CubeData[] cubeData = new CubeData[CUBE_COUNT];
-		private readonly Matrix4x4[] cubeMatrices = new Matrix4x4[CUBE_COUNT];
-		private readonly PartitionSet<CubeData> partitionedCubes = new PartitionSet<CubeData>();
-	
-		private ITaskHandle respawnCubesHandle;
-		private ITaskHandle fillRenderSetHandle;
-
-		private Vector2 lastTargetPosition;
-		private TaskManager taskManager;
+		//---> Buffers
+		private Vector2[] spawnPoints;
+		private CubeData[] cubeData;
+		private Matrix4x4[] cubeMatrices;
+		private PartitionSet<CubeData> partitionedCubes;
 		private RenderSet renderSet;
+
+		//---> Misc
+		private TaskManager taskManager;
+		private GridPartitioner gridPartitioner;
+
+		//---> Tasks
+		private PartitionCubeTask partitionCubeTask;
+		private MoveCubeTask moveCubeTask;
+		private CalculateMatrixTask calculateMatrixTask;
+		private RespawnCubeTask respawnCubeTask;
+		private AddToRenderSetTask addToRenderSetTask;
+
+		//---> Depenencies that 'HAVE' to be completed before we can start a new frame
+		private DependencySet finishDepenency;
+
+		//---> Info about target
+		private Vector2 targetPosition;
+		private Vector2 targetVelocity;
 
 		protected void Start()
 		{
-			taskManager = new TaskManager();
+			//Allocate arrays
+			spawnPoints = new Vector2[cubeCount];
+			cubeData = new CubeData[cubeCount];
+			cubeMatrices = new Matrix4x4[cubeCount];
+			partitionedCubes = new PartitionSet<CubeData>();
 			renderSet = new RenderSet(mesh, material);
 
-			for (int i = 0; i < CUBE_COUNT; i++)
+			//Setup initial data
+			for (int i = 0; i < cubeCount; i++)
 			{
-				spawnPoints[i] = new Vector2(Random.Range(-100f, 100f), Random.Range(-100f, 100f));
-				SpawnCube(i);
+				spawnPoints[i] = new Vector2(	Random.Range(minInitialSpawnPoint, maxInitialSpawnPoint), 
+												Random.Range(minInitialSpawnPoint, maxInitialSpawnPoint));
+				cubeData[i] = new CubeData { ID = i, Position = spawnPoints[i] };
 			}
+
+			//Create misc stuff
+			taskManager = new TaskManager(executorCount);
+			gridPartitioner = new GridPartitioner();
+
+			//Create tasks
+			partitionCubeTask = new PartitionCubeTask(partitionedCubes, gridPartitioner);
+			moveCubeTask = new MoveCubeTask(gridPartitioner, partitionedCubes);
+			calculateMatrixTask = new CalculateMatrixTask();
+			respawnCubeTask = new RespawnCubeTask(spawnPoints);
+			addToRenderSetTask = new AddToRenderSetTask(renderSet);
 		}
 
 		protected void Update()
 		{
-			//Render the data from the last frame
-			if(fillRenderSetHandle != null)
-			{
-				fillRenderSetHandle.Join();
+			//---> Update target info based on the linked-in transform
+			UpdateTargetInfo();
 
+			//---> Render the data from the previous tasks
+			if(finishDepenency != null)
+			{
+				//Wait for (and help out with) completing the tasks from the previous frame
+				finishDepenency.Join();
+
+				//Render the results from the previous tasks
 				renderSet.Render();
 				renderSet.Clear();
 			}
-			if(respawnCubesHandle != null)
-				respawnCubesHandle.Join();
 
-			//Partition the cubes
-			GridPartitioner partitioner = new GridPartitioner(Random.Range(7f, 10f)); //Use a 'random' partition size to make the 'grid' less noticeable
+			//---> Update the tasks with info from the inspector
+			gridPartitioner.PartitionSize = Random.Range(minPartitionSize, maxPartitionSize); //Randomize to make the grid less noticeable
+			moveCubeTask.CubeRadius = cubeRadius;
+			moveCubeTask.CubeSeperationForce = cubeSeperationForce;
+			moveCubeTask.CubeVeloInheritance = cubeVeloInheritance;
+			moveCubeTask.TargetRadius = targetRadius;
+			moveCubeTask.TargetSeperationForce = targetSeperationForce;
+			moveCubeTask.TargetVeloInheritance = targetVeloInheritance;
+			moveCubeTask.DeltaTime = Time.deltaTime;
+			moveCubeTask.TargetPosition = targetPosition;
+			moveCubeTask.TargetVelocity = targetVelocity;
+			respawnCubeTask.MaxDistance = maxDistanceBeforeRespawn;
+
+			//---> Clear some data from the previous frame
 			partitionedCubes.ClearData();
-			ITaskHandle partitionCubesHandle = taskManager.ScheduleArray(cubeData, new PartitionCubesTask(partitionedCubes, partitioner), batchSize);
 
-			//After the partitioning move the cubes
-			Vector2 targetPosition = new Vector2(targetTrans.position.x, targetTrans.position.z);
-			Vector2 targetDiff = targetPosition - lastTargetPosition;
-			Vector2 targetVelocity = targetDiff == Vector2.zero ? Vector2.zero : targetDiff / Time.deltaTime;
-			lastTargetPosition = targetPosition;
+			//---> Schedule tasks for this frame
+			//NOTE: there is no safety yet, so you manually need to check what resources the taska are 
+			//using and setup depenendcies between the tasks accordingly
+			ITaskDependency partitionCubesDep = taskManager.ScheduleArray(cubeData, partitionCubeTask, batchSize);
 
-			MoveCubeTask moveTask = new MoveCubeTask
-			(
-				deltaTime: Time.deltaTime,
-				targetPosition: targetPosition,
-				targetVelocity: targetVelocity,
-				partitioner: partitioner,
-				others: partitionedCubes
-			);
-			ITaskHandle updateCubeHandle = taskManager.ScheduleArray(cubeData, moveTask, batchSize, partitionCubesHandle);
+			ITaskDependency updateCubeDep = taskManager.ScheduleArray(cubeData, moveCubeTask, batchSize, partitionCubesDep);
 
-			//After that calculate the new matrices
-			ITaskHandle calculateMatricesHandle = taskManager.ScheduleArray(cubeData, cubeMatrices, new CalculateMatricesTask(), batchSize, updateCubeHandle);
+			ITaskDependency calculateMatricesDep = taskManager.ScheduleArray(cubeData, cubeMatrices, calculateMatrixTask, batchSize, updateCubeDep);
 
-			//After that in parallel fill the render-set and respawn cubes that are too far away
-			respawnCubesHandle = taskManager.ScheduleArray(cubeData, new RespawnCubesTask(spawnPoints), batchSize, calculateMatricesHandle);
-			fillRenderSetHandle = taskManager.ScheduleArray(cubeMatrices, new FillRenderSetTask(renderSet), batchSize, calculateMatricesHandle);
+			//Note: There last two tasks both depend on the previous one so they run in parallel 
+			ITaskDependency respawnCubesDep = taskManager.ScheduleArray(cubeData, respawnCubeTask, batchSize, calculateMatricesDep);
+			ITaskDependency addToRenderSetDep = taskManager.ScheduleArray(cubeMatrices, addToRenderSetTask, batchSize, calculateMatricesDep);
+
+			//---> Setup the finish dependency
+			finishDepenency = new DependencySet(respawnCubesDep, addToRenderSetDep);
 		}
 
 		protected void OnDestroy()
@@ -87,15 +136,12 @@ namespace Sample
 			renderSet.Dispose();
 		}
 
-		private void SpawnCube(int id)
+		private void UpdateTargetInfo()
 		{
-			cubeData[id] = new CubeData
-			{
-				ID = id,
-				Position = spawnPoints[id],
-				Velocity = Vector2.zero,
-				Rotation = 0f
-			};
+			Vector2 newTargetPos = targetTrans == null ? Vector2.zero : new Vector2(targetTrans.position.x, targetTrans.position.z);
+			Vector2 targetDiff = newTargetPos - targetPosition;
+			targetPosition = newTargetPos;
+			targetVelocity = targetDiff == Vector2.zero ? Vector2.zero : targetDiff / Time.deltaTime;
 		}
 	}
 }

@@ -7,9 +7,14 @@ namespace Tasks
 {
 	public class TaskManager : IDisposable
 	{
-		private readonly TaskRunner runner = new TaskRunner();
+		private readonly TaskRunner runner;
 
-		public ITaskHandle ScheduleSingle(ITask task, ITaskDependency dependency = null)
+		public TaskManager(int executorCount = 7)
+		{
+			runner = new TaskRunner(executorCount);
+		}
+
+		public ITaskDependency ScheduleSingle(ITask task, ITaskDependency dependency = null)
 		{
 			SingleTaskHandle handle = new SingleTaskHandle(task, runner);
 			if(dependency == null || dependency.IsComplete)
@@ -19,7 +24,7 @@ namespace Tasks
 			return handle;
 		}
 
-		public ITaskHandle ScheduleArray<T1>(T1[] data, ITask<T1> task, int batchSize = 10, ITaskDependency dependency = null)
+		public ITaskDependency ScheduleArray<T1>(T1[] data, ITask<T1> task, int batchSize = 10, ITaskDependency dependency = null)
 			where T1 : struct
 		{
 			ArrayTaskHandle<T1> handle = new ArrayTaskHandle<T1>(data, task, runner);	
@@ -30,7 +35,7 @@ namespace Tasks
 			return handle;
 		}
 
-		public ITaskHandle ScheduleArray<T1, T2>(T1[] data1, T2[] data2, ITask<T1, T2> task, int batchSize = 10, ITaskDependency dependency = null)
+		public ITaskDependency ScheduleArray<T1, T2>(T1[] data1, T2[] data2, ITask<T1, T2> task, int batchSize = 10, ITaskDependency dependency = null)
 			where T1 : struct
 			where T2 : struct
 		{

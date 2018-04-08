@@ -5,11 +5,11 @@ using Utils;
 
 namespace Sample
 {
-	public class FillRenderSetTask : ITask<Matrix4x4>
+	public class AddToRenderSetTask : ITask<Matrix4x4>
 	{
 		private readonly RenderSet renderSet;
 
-		public FillRenderSetTask(RenderSet renderSet)
+		public AddToRenderSetTask(RenderSet renderSet)
 		{
 			this.renderSet = renderSet;
 		}
