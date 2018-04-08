@@ -4,7 +4,7 @@ using System.Threading;
 namespace Tasks
 {
 	public class BatchTaskHandle<T> : ITaskHandle<T[]>, ITaskExecutor
-		where T : struct, ITaskData
+		where T : struct
 	{
 		private readonly T[] data;
 		private readonly ITask<T> task;

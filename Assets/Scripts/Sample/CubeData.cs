@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Sample
 {
-	public struct CubeData : ITaskData
+	public struct CubeData
 	{
 		public int ID;
 		public Vector2 Position;

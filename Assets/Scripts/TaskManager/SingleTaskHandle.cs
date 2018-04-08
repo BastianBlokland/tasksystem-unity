@@ -4,7 +4,7 @@ using System.Threading;
 namespace Tasks
 {
 	public class SingleTaskHandle<T> : ITaskHandle<T>, ITaskExecutor
-		where T : struct, ITaskData
+		where T : struct
 	{
 		private T data;
 		private readonly ITask<T> task;

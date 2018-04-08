@@ -10,7 +10,7 @@ namespace Tasks
 		private readonly TaskRunner runner = new TaskRunner();
 
 		public ITaskHandle<T> Schedule<T>(T data, ITask<T> task)
-			where T : struct, ITaskData
+			where T : struct
 		{
 			SingleTaskHandle<T> handle = new SingleTaskHandle<T>(data, task, runner);
 			handle.Schedule();
@@ -18,7 +18,7 @@ namespace Tasks
 		}
 
 		public ITaskHandle<T[]> ScheduleBatch<T>(T[] data, ITask<T> task, int batchSize = 10)
-			where T : struct, ITaskData
+			where T : struct
 		{
 			BatchTaskHandle<T> handle = new BatchTaskHandle<T>(data, task, runner);
 			handle.Schedule(batchSize);
