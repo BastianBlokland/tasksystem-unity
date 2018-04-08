@@ -7,7 +7,7 @@ namespace Sample
 {
 	public class SampleController : MonoBehaviour
 	{
-		private const int CUBE_COUNT = 10000;
+		private const int CUBE_COUNT = 12500;
 
 		[SerializeField] private Mesh mesh;
 		[SerializeField] private Material material;
@@ -15,8 +15,9 @@ namespace Sample
 
 		private readonly CubeData[] cubeData = new CubeData[CUBE_COUNT];
 		private readonly PartitionSet<CubeData> partitionedData = new PartitionSet<CubeData>();
-		private readonly ITaskHandle<CubeData>[] moveTasks = new ITaskHandle<CubeData>[CUBE_COUNT];
 		private readonly Matrix4x4[] renderMatrices = new Matrix4x4[1023]; //1023, is the max render count for a single call (https://docs.unity3d.com/ScriptReference/Graphics.DrawMeshInstanced.html)
+		
+		private ITaskHandle<CubeData[]> updateCubeTask;
 
 		private Vector2 lastTargetPosition;
 		private GridPartitioner partitioner;
@@ -37,20 +38,32 @@ namespace Sample
 			Vector2 targetVelocity = targetDiff == Vector2.zero ? Vector2.zero : targetDiff / Time.deltaTime;
 			lastTargetPosition = targetPosition;
 
-			//Get the new cube-data from the previous tasks
+			//Observer the results
+			if(updateCubeTask != null)
+				updateCubeTask.Join();
+
+			//Render the cubes
+			for (int ci = 0; ci < cubeData.Length; ci += renderMatrices.Length) //Render in chunks of '1023'
+			{
+				int chunkSize = (ci + renderMatrices.Length) >= cubeData.Length ? (cubeData.Length - ci) : renderMatrices.Length;
+				//Prepare the 'chunk' for rendering
+				for (int mi = 0; mi < chunkSize; mi++)
+					renderMatrices[mi] = CreateMatrix(cubeData[ci + mi]);
+
+				//Render chunk
+				Graphics.DrawMeshInstanced(mesh, 0, material, renderMatrices, chunkSize);
+			}
+
+			//Respawn cubes if necessary
 			for (int i = 0; i < CUBE_COUNT; i++)
 			{
-				//Get the data from the previous task
-				if(moveTasks[i] != null)
-					cubeData[i] = moveTasks[i].Join();
-
 				if(cubeData[i].Position.sqrMagnitude > (200f * 200f))
 					SpawnCube(i);
 			}
 
 			//Update partitioned data
-			partitioner = new GridPartitioner(Random.Range(10f, 15f)); //Use a 'random' partition size to make the 'grid' less noticeable
-			partitionedData.Clear();
+			partitioner = new GridPartitioner(Random.Range(7f, 10f)); //Use a 'random' partition size to make the 'grid' less noticeable
+			partitionedData.ClearData();
 			for (int i = 0; i < CUBE_COUNT; i++)
 			{
 				int partition = partitioner.Partition(cubeData[i].Position);
@@ -66,23 +79,7 @@ namespace Sample
 				partitioner: partitioner,
 				others: partitionedData
 			);
-			for (int i = 0; i < CUBE_COUNT; i++)
-			{
-				//Schedule a new move
-				moveTasks[i] = taskManager.ScheduleTask(moveTask, cubeData[i]);
-			}
-
-			//Render the cubes
-			for (int ci = 0; ci < cubeData.Length; ci += renderMatrices.Length) //Render in chunks of '1023'
-			{
-				int chunkSize = (ci + renderMatrices.Length) >= cubeData.Length ? (cubeData.Length - ci) : renderMatrices.Length;
-				//Prepare the 'chunk' for rendering
-				for (int mi = 0; mi < chunkSize; mi++)
-					renderMatrices[mi] = CreateMatrix(cubeData[ci + mi]);
-
-				//Render chunk
-				Graphics.DrawMeshInstanced(mesh, 0, material, renderMatrices, chunkSize);
-			}
+			updateCubeTask = taskManager.ScheduleBatch(cubeData, moveTask);
 		}
 
 		protected void OnDestroy()

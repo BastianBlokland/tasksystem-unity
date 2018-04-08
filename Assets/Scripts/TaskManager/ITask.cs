@@ -1,9 +1,8 @@
 ﻿namespace Tasks
 {
-	public interface ITask<InputData, OutputData>
-		where InputData : struct, ITaskData
-		where OutputData : struct, ITaskData
+	public interface ITask<T>
+		where T : struct, ITaskData
 	{
-		OutputData Execute(InputData input);
+		void Execute(ref T data);
 	}
 }

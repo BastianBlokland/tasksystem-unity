@@ -1,11 +1,9 @@
 namespace Tasks
 {
-	public interface ITaskHandle<OutputData>
-		where OutputData : struct, ITaskData
+	public interface ITaskHandle<T>
 	{
-		bool IsComplete { get; }
-		OutputData Data { get; }
+		void Schedule();
 
-		OutputData Join();
+		T Join();
 	}
 }

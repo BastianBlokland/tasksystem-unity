@@ -21,6 +21,16 @@ namespace Tasks
 			actionQueue.Enqueue(action);
 		}
 
+		public void Help()
+		{
+			Action action;
+			if(actionQueue.TryDequeue(out action))
+			{
+				try { action(); }
+				catch(Exception) { }
+			}
+		}
+
 		public void Dispose()
 		{
 			abort = true;

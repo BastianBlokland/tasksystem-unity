@@ -5,7 +5,7 @@ using Utils;
 
 namespace Sample
 {
-	public struct MoveCubeTask : ITask<CubeData, CubeData>
+	public struct MoveCubeTask : ITask<CubeData>
 	{
 		const float CUBE_RADIUS = 1.25f;
 		const float CUBE_SEPERATION_FORCE = 2f;
@@ -29,31 +29,32 @@ namespace Sample
 			this.others = others;
 		}
 
-		public CubeData Execute(CubeData input)
+		public void Execute(ref CubeData data)
 		{
 			//Avoid others in our partition
-			int partition = partitioner.Partition(input.Position);
+			int partition = partitioner.Partition(data.Position);
 			List<CubeData> neighbours = others.Get(partition);
-			for (int i = 0; i < neighbours.Count; i++)
+			if(neighbours != null)
 			{
-				//Skip ourselves
-				if(neighbours[i].ID == input.ID)
-					continue;
+				for (int i = 0; i < neighbours.Count; i++)
+				{
+					//Skip ourselves
+					if(neighbours[i].ID == data.ID)
+						continue;
 
-				Avoid(ref input, neighbours[i].Position, CUBE_RADIUS, neighbours[i].Velocity, CUBE_SEPERATION_FORCE, CUBE_VELO_INHERITANCE);
+					Avoid(ref data, neighbours[i].Position, CUBE_RADIUS, neighbours[i].Velocity, CUBE_SEPERATION_FORCE, CUBE_VELO_INHERITANCE);
+				}
 			}
 
 			//Avoid the target
-			Avoid(ref input, targetPosition, TARGET_RADIUS, targetVelocity, TARGET_SEPERATION_FORCE, TARGET_VELO_INHERITANCE);
+			Avoid(ref data, targetPosition, TARGET_RADIUS, targetVelocity, TARGET_SEPERATION_FORCE, TARGET_VELO_INHERITANCE);
 
 			//Update position
-			input.Position += input.Velocity * deltaTime;
+			data.Position += data.Velocity * deltaTime;
 
 			//Update rotation
-			if(input.Velocity != Vector2.zero)
-				input.Rotation = Vector2.SignedAngle(Vector2.up, input.Velocity);
-
-			return input;
+			if(data.Velocity != Vector2.zero)
+				data.Rotation = Vector2.SignedAngle(Vector2.up, data.Velocity);
 		}
 
 		private void Avoid(ref CubeData data, Vector2 point, float pointRadius, Vector2 pointVelocity, float seperationForce, float veloInheritance)
