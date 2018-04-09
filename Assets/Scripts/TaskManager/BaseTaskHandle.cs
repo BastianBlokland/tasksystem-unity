@@ -39,7 +39,7 @@ namespace Tasks
 			isScheduled = true;
 		}
 
-		public void Join()
+		public void Complete()
 		{
 			while(!isComplete)
 				runner.Help();

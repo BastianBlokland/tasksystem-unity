@@ -96,7 +96,7 @@ namespace Sample
 			if(finishDepenency != null)
 			{
 				//Wait for (and help out with) completing the tasks from the previous frame
-				finishDepenency.Join();
+				finishDepenency.Complete();
 
 				//Render the results from the previous tasks
 				renderSet.Render();

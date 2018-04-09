@@ -9,6 +9,6 @@ namespace Tasks
 
 		bool IsComplete { get; }
 
-		void Join();
+		void Complete();
 	}	
 }

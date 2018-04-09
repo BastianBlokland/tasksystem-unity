@@ -26,10 +26,10 @@ namespace Tasks
 				dependencies[i].Completed += SingleDependencyComplete;
 		}
 
-		public void Join()
+		public void Complete()
 		{
 			for (int i = 0; i < dependencies.Length; i++)
-				dependencies[i].Join();
+				dependencies[i].Complete();
 		}
 
 		private void SingleDependencyComplete()
