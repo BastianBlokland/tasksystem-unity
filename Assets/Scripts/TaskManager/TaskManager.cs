@@ -17,10 +17,7 @@ namespace Tasks
 		public IDependency ScheduleSingle(ITask task, IDependency dependency = null)
 		{
 			SingleTaskHandle handle = new SingleTaskHandle(task, runner);
-			if(dependency == null || dependency.IsCompleted)
-				handle.Schedule(batchSize: 1);
-			else
-				dependency.Completed += () => handle.Schedule(batchSize: 1);
+			Schedule(handle, dependency);
 			return handle;
 		}
 
@@ -28,10 +25,7 @@ namespace Tasks
 			where T1 : struct
 		{
 			ArrayTaskHandle<T1> handle = new ArrayTaskHandle<T1>(data, task, runner);	
-			if(dependency == null || dependency.IsCompleted)
-				handle.Schedule(batchSize);
-			else
-				dependency.Completed += () => handle.Schedule(batchSize);
+			Schedule(handle, dependency, batchSize);
 			return handle;
 		}
 
@@ -40,16 +34,25 @@ namespace Tasks
 			where T2 : struct
 		{
 			ArrayTaskHandle<T1, T2> handle = new ArrayTaskHandle<T1, T2>(data1, data2, task, runner);
-			if(dependency == null || dependency.IsCompleted)
-				handle.Schedule(batchSize);
-			else
-				dependency.Completed += () => handle.Schedule(batchSize);
+			Schedule(handle, dependency, batchSize);
 			return handle;
 		}
 
 		public void Dispose()
 		{
 			runner.Dispose();
+		}
+
+		private void Schedule(BaseTaskHandle handle, IDependency dependency, int batchSize = 1)
+		{
+			//Note thread-safety is a bit tricky because if we check the 'IsCompleted' first then subscribe if its not complete yet
+			//then the completed event could actually be fired in between those calls. Thats why we first subscribe (even tho it might allready be complete)
+			//and then schedule if its allready complete. In the worst case 'Schedule' gets called twice when the 'Completed' is fired in between the subscribing
+			//and the if, but the handle will ignore the second schdule call
+			if(dependency != null)
+				dependency.Completed += () => handle.Schedule(batchSize);
+			if(dependency == null || dependency.IsCompleted)
+				handle.Schedule(batchSize);
 		}
 	}
 }

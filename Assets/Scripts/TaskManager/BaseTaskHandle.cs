@@ -29,7 +29,7 @@ namespace Tasks
 		public void Schedule(int batchSize)
 		{
 			if(isScheduled)
-				throw new Exception("[BatchTaskHandle] Allready scheduled");
+				return;
 
 			tasksLeft = length;
 			int startOffset = batchSize - 1;
