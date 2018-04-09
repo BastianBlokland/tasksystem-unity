@@ -18,17 +18,19 @@ namespace Tasks
 		{
 			this.dependencies = dependencies;
 
-			isCompleted = true;
+			//Note thread-safety is a bit tricky because if we check the 'IsCompleted' first then subscribe if its not complete yet
+			//then the completed event could actually be fired in between those calls. Thats why we first subscribe (even tho it might allready be complete)
+			//and then check the bool. In the worst case 'SingleDependencyComplete' gets called twice when the 'Completed' is fired in between the subscribing
+			//and the if, but we can safely ignore the second one
 			for (int i = 0; i < dependencies.Length; i++)
 			{
-				isCompleted &= dependencies[i].IsCompleted;
-				if(!dependencies[i].IsCompleted)
-					dependencies[i].Completed += SingleDependencyComplete;
-
+				dependencies[i].Completed += SingleDependencyComplete;
+				dependencies[i].Scheduled += SingleDependencyScheduled;
+				
+				if(dependencies[i].IsCompleted)
+					SingleDependencyComplete();
 				if(dependencies[i].IsScheduled)
-					isScheduled = true;
-				else
-					dependencies[i].Scheduled += SingleDependencyScheduled;
+					SingleDependencyScheduled();
 			}
 		}
 
@@ -40,25 +42,26 @@ namespace Tasks
 
 		private void SingleDependencyComplete()
 		{
-			bool totalComplete = true;
-			for (int i = 0; i < dependencies.Length; i++)
-				totalComplete &= dependencies[i].IsCompleted;
+			if(isCompleted)
+				return;
 
-			//Check if the entire check is complete, if so: Fire our completed event
-			if(totalComplete)
+			//If there is any dependency not complete yet then the set is not complete either
+			for (int i = 0; i < dependencies.Length; i++)
 			{
-				isCompleted = true;
-				Completed();
+				if(!dependencies[i].IsCompleted)
+					return;
 			}
+
+			isCompleted = true;
+			Completed();
 		}
 
 		private void SingleDependencyScheduled()
 		{
-			if(!isScheduled)
-			{
-				isScheduled = true;
-				Scheduled();
-			}
+			if(IsScheduled)
+				return;
+			isScheduled = true;
+			Scheduled();
 		}
 	}
 }

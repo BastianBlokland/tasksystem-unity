@@ -48,7 +48,7 @@ namespace Tasks
 			//Note thread-safety is a bit tricky because if we check the 'IsCompleted' first then subscribe if its not complete yet
 			//then the completed event could actually be fired in between those calls. Thats why we first subscribe (even tho it might allready be complete)
 			//and then schedule if its allready complete. In the worst case 'Schedule' gets called twice when the 'Completed' is fired in between the subscribing
-			//and the if, but the handle will ignore the second schdule call
+			//and the if, but the handle will ignore the second schedule call
 			if(dependency != null)
 				dependency.Completed += () => handle.Schedule(batchSize);
 			if(dependency == null || dependency.IsCompleted)
