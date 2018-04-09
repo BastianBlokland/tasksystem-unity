@@ -45,7 +45,7 @@ namespace Sample
 		private AddToRenderSetTask addToRenderSetTask;
 
 		//---> Depenencies that 'HAVE' to be completed before we can start a new frame
-		private DependencySet finishDepenency;
+		private DependencySet completeDependency;
 
 		//---> Info about target
 		private Vector2 targetPosition;
@@ -93,10 +93,10 @@ namespace Sample
 			UpdateTargetInfo();
 
 			//---> Render the data from the previous tasks
-			if(finishDepenency != null)
+			if(completeDependency != null)
 			{
 				//Wait for (and help out with) completing the tasks from the previous frame
-				finishDepenency.Complete();
+				completeDependency.Complete();
 
 				//Render the results from the previous tasks
 				renderSet.Render();
@@ -122,18 +122,18 @@ namespace Sample
 			//---> Schedule tasks for this frame
 			//NOTE: there is no safety yet, so you manually need to check what resources the taska are 
 			//using and setup depenendcies between the tasks accordingly
-			ITaskDependency partitionCubesDep = taskManager.ScheduleArray(cubeData, partitionCubeTask, batchSize);
+			IDependency partitionCubesDep = taskManager.ScheduleArray(cubeData, partitionCubeTask, batchSize);
 
-			ITaskDependency updateCubeDep = taskManager.ScheduleArray(cubeData, moveCubeTask, batchSize, partitionCubesDep);
+			IDependency updateCubeDep = taskManager.ScheduleArray(cubeData, moveCubeTask, batchSize, partitionCubesDep);
 
-			ITaskDependency calculateMatricesDep = taskManager.ScheduleArray(cubeData, cubeMatrices, calculateMatrixTask, batchSize, updateCubeDep);
+			IDependency calculateMatricesDep = taskManager.ScheduleArray(cubeData, cubeMatrices, calculateMatrixTask, batchSize, updateCubeDep);
 
 			//Note: There last two tasks both depend on the previous one so they run in parallel 
-			ITaskDependency respawnCubesDep = taskManager.ScheduleArray(cubeData, respawnCubeTask, batchSize, calculateMatricesDep);
-			ITaskDependency addToRenderSetDep = taskManager.ScheduleArray(cubeMatrices, addToRenderSetTask, batchSize, calculateMatricesDep);
+			IDependency respawnCubesDep = taskManager.ScheduleArray(cubeData, respawnCubeTask, batchSize, calculateMatricesDep);
+			IDependency addToRenderSetDep = taskManager.ScheduleArray(cubeMatrices, addToRenderSetTask, batchSize, calculateMatricesDep);
 
 			//---> Setup the finish dependency
-			finishDepenency = new DependencySet(respawnCubesDep, addToRenderSetDep);
+			completeDependency = new DependencySet(respawnCubesDep, addToRenderSetDep);
 		}
 
 		protected void OnDestroy()

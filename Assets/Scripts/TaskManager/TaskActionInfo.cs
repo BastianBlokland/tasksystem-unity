@@ -2,11 +2,11 @@ namespace Tasks
 {
 	public struct TaskActionInfo
 	{
-		private readonly ITaskExecutor executor;
+		private readonly IExecutor executor;
 		private readonly int minIndex;
 		private readonly int maxIndex;
 
-		public TaskActionInfo(ITaskExecutor executor, int minIndex, int maxIndex)
+		public TaskActionInfo(IExecutor executor, int minIndex, int maxIndex)
 		{
 			this.executor = executor;
 			this.minIndex = minIndex;

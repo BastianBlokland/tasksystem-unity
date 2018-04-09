@@ -2,7 +2,7 @@ using System;
 
 namespace Tasks
 {
-	public class DependencySet : ITaskDependency
+	public class DependencySet : IDependency
 	{
 		public event Action Completed = delegate {};
 
@@ -17,9 +17,9 @@ namespace Tasks
 			}
 		}
 
-		private readonly ITaskDependency[] dependencies;
+		private readonly IDependency[] dependencies;
 
-		public DependencySet(params ITaskDependency[] dependencies)
+		public DependencySet(params IDependency[] dependencies)
 		{
 			this.dependencies = dependencies;
 			for (int i = 0; i < dependencies.Length; i++)

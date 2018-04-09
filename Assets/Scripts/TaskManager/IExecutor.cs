@@ -1,6 +1,6 @@
 namespace Tasks
 {
-	public interface ITaskExecutor
+	public interface IExecutor
 	{
 		void ExecuteElement(int index);
 	}

@@ -16,7 +16,7 @@ namespace Tasks
 				new Thread(ThreadExecutor).Start();
 		}
 
-		public void Schedule(ITaskExecutor executor, int minIndex, int maxIndex)
+		public void Schedule(IExecutor executor, int minIndex, int maxIndex)
 		{
 			actionQueue.Enqueue(new TaskActionInfo(executor, minIndex, maxIndex));
 		}
