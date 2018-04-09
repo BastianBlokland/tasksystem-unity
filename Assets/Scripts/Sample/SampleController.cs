@@ -2,12 +2,14 @@ using System.Collections.Generic;
 using Tasks;
 using Utils;
 using UnityEngine;
+using Profiler;
 
 namespace Sample
 {
 	public class SampleController : MonoBehaviour
 	{
 		//---> Config
+		[SerializeField] private TrackViewer profiler;
 		[SerializeField] private Mesh mesh;
 		[SerializeField] private Material material;
 		[SerializeField] private Transform targetTrans;
@@ -51,6 +53,13 @@ namespace Sample
 		private Vector2 targetPosition;
 		private Vector2 targetVelocity;
 
+		//---> Profiling tracks
+		private TaskProfileTrack partitionCubesProfilerTrack;
+		private TaskProfileTrack moveCubesProfilerTrack;
+		private TaskProfileTrack calculateMatricesProfilerTrack;
+		private TaskProfileTrack respawnCubesProfilerTrack;
+		private TaskProfileTrack addToRenderSetProfilerTrack;
+
 		protected void Start()
 		{
 			if(mesh == null) { Debug.LogError("[SampleController] No 'mesh' provided"); return; }
@@ -82,6 +91,16 @@ namespace Sample
 			calculateMatrixTask = new CalculateMatrixTask();
 			respawnCubeTask = new RespawnCubeTask(spawnPoints);
 			addToRenderSetTask = new AddToRenderSetTask(renderSet);
+
+			//Setup profiling tracks
+			if(profiler != null)
+			{
+				partitionCubesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Partition cubes");
+				moveCubesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Move cubes");
+				calculateMatricesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Calculate matrices");
+				respawnCubesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Respawn cubes");
+				addToRenderSetProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Creating render-set");
+			}
 		}
 
 		protected void Update()
@@ -122,15 +141,49 @@ namespace Sample
 			//---> Schedule tasks for this frame
 			//NOTE: there is no safety yet, so you manually need to check what resources the taska are 
 			//using and setup depenendcies between the tasks accordingly
-			IDependency partitionCubesDep = taskManager.ScheduleArray(cubeData, partitionCubeTask, batchSize);
-
-			IDependency updateCubeDep = taskManager.ScheduleArray(cubeData, moveCubeTask, batchSize, partitionCubesDep);
-
-			IDependency calculateMatricesDep = taskManager.ScheduleArray(cubeData, cubeMatrices, calculateMatrixTask, batchSize, updateCubeDep);
+			IDependency partitionCubesDep = taskManager.ScheduleArray
+			(
+				data: cubeData, 
+				task: partitionCubeTask, 
+				batchSize: batchSize,
+				dependency: null,
+				tracker: partitionCubesProfilerTrack
+			);
+			IDependency updateCubeDep = taskManager.ScheduleArray
+			(
+				data: cubeData, 
+				task: moveCubeTask, 
+				batchSize: batchSize, 
+				dependency: partitionCubesDep, 
+				tracker: moveCubesProfilerTrack
+			);
+			IDependency calculateMatricesDep = taskManager.ScheduleArray
+			(
+				data1: cubeData, 
+				data2: cubeMatrices, 
+				task: calculateMatrixTask, 
+				batchSize: batchSize, 
+				dependency: updateCubeDep,
+				tracker: calculateMatricesProfilerTrack
+			);
 
 			//Note: There last two tasks both depend on the previous one so they run in parallel 
-			IDependency respawnCubesDep = taskManager.ScheduleArray(cubeData, respawnCubeTask, batchSize, calculateMatricesDep);
-			IDependency addToRenderSetDep = taskManager.ScheduleArray(cubeMatrices, addToRenderSetTask, batchSize, calculateMatricesDep);
+			IDependency respawnCubesDep = taskManager.ScheduleArray
+			(
+				data: cubeData, 
+				task: respawnCubeTask, 
+				batchSize: batchSize, 
+				dependency: calculateMatricesDep,
+				tracker: respawnCubesProfilerTrack
+			);
+			IDependency addToRenderSetDep = taskManager.ScheduleArray
+			(
+				data: cubeMatrices, 
+				task: addToRenderSetTask, 
+				batchSize: batchSize, 
+				dependency: calculateMatricesDep,
+				tracker: addToRenderSetProfilerTrack
+			);
 
 			//---> Setup the finish dependency
 			completeDependency = new DependencySet(respawnCubesDep, addToRenderSetDep);
