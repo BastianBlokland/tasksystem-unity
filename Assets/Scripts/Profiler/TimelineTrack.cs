@@ -7,9 +7,13 @@ namespace Profiler
 {
 	public class TimelineTrack
 	{
+		private const int MAX_ITEM_COUNT = 100;
+
 		private readonly Stopwatch stopWatch = new Stopwatch();
 		private readonly ReaderWriterLockSlim threadLock = new ReaderWriterLockSlim();
-		private readonly List<TimelineItem> items = new List<TimelineItem>();
+		private readonly TimelineItem[] items = new TimelineItem[MAX_ITEM_COUNT];
+		private int count = 0;
+		private int currentItem = -1;
 		private bool started;
 
 		public void StartTimer()
@@ -23,7 +27,7 @@ namespace Profiler
 			outputList.Clear();
 			threadLock.EnterReadLock();
 			{
-				for (int i = 0; i < items.Count; i++)
+				for (int i = 0; i < count; i++)
 					outputList.Add(items[i]);
 			}
 			threadLock.ExitReadLock();
@@ -36,10 +40,13 @@ namespace Profiler
 				if(!started)
 					throw new Exception("[ProfileTrack] Unable to log start-work: 'Timer' not yet started");
 			
-				if(items.Count > 0 && items[items.Count - 1].Running)
+				if(count > 0 && items[currentItem].Running)
 					throw new Exception("[ProfileTrack] Unable to log start-work: Last item is still running");
 
-				items.Add(new TimelineItem { StartTime = (float)stopWatch.Elapsed.TotalSeconds, Running = true });
+				currentItem = (currentItem + 1) % MAX_ITEM_COUNT;
+				if(count < MAX_ITEM_COUNT)
+					count++;
+				items[currentItem] = new TimelineItem { StartTime = (float)stopWatch.Elapsed.TotalSeconds, Running = true };
 			}
 			threadLock.ExitWriteLock();
 		}
@@ -48,16 +55,16 @@ namespace Profiler
 		{
 			threadLock.EnterWriteLock();
 			{
-				if(items.Count == 0)
+				if(count == 0)
 					throw new Exception("[ProfileTrack] Unable to log end-work: No item started yet");
 
-				TimelineItem lastItem = items[items.Count - 1];
-				if(!lastItem.Running)
+				TimelineItem current = items[currentItem];
+				if(!current.Running)
 					throw new Exception("[ProfileTrack] Unable to log end-work: No running item");
 				
-				lastItem.Running = false;
-				lastItem.StopTime = (float)stopWatch.Elapsed.TotalSeconds;
-				items[items.Count - 1] = lastItem;
+				current.Running = false;
+				current.StopTime = (float)stopWatch.Elapsed.TotalSeconds;
+				items[currentItem] = current;
 			}
 			threadLock.ExitWriteLock();
 		}
