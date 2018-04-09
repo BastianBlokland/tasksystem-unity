@@ -89,12 +89,14 @@ namespace Profiler
 			for (int i = 0; i < itemCache.Count; i++)
 			{
 				TimelineItem item = itemCache[i];
-				bool inView = MathUtils.DoesRangeOverlap(item.StartTime, item.StopTime, leftTime, rightTime);
+				float itemStartTime = item.StartTime;
+				float itemStopTime = item.Running ? currentTime : item.StopTime;
+				bool inView = MathUtils.DoesRangeOverlap(itemStartTime, itemStopTime, leftTime, rightTime);
 				if(inView)
 				{
 					//Convert to progress in the view
-					float p1 = Mathf.InverseLerp(leftTime, rightTime, item.StartTime);
-					float p2 = Mathf.InverseLerp(leftTime, rightTime, item.Running ? currentTime : item.StopTime); 
+					float p1 = Mathf.InverseLerp(leftTime, rightTime, itemStartTime);
+					float p2 = Mathf.InverseLerp(leftTime, rightTime, itemStopTime); 
 
 					Rect itemRect = new Rect(rect.x + p1 * rect.width, rect.y, (p2 - p1) * rect.width, rect.height);
 					GUI.DrawTexture(itemRect, Texture2D.whiteTexture);
