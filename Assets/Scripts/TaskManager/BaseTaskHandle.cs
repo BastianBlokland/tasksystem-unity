@@ -31,6 +31,10 @@ namespace Tasks
 			if(isScheduled)
 				return;
 
+			//Zero or negative batch-sizes are not really supported :)
+			if(batchSize <= 0) 
+				batchSize = 1;
+
 			tasksLeft = length;
 			int startOffset = batchSize - 1;
 			for (int i = 0; i < length; i += batchSize)
