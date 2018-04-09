@@ -54,6 +54,8 @@ namespace Sample
 		private Vector2 targetVelocity;
 
 		//---> Profiling tracks
+		private ProfileTrack mainProfilerTrack;
+		private ProfileTrack completeProfilerTrack;
 		private TaskProfileTrack partitionCubesProfilerTrack;
 		private TaskProfileTrack moveCubesProfilerTrack;
 		private TaskProfileTrack calculateMatricesProfilerTrack;
@@ -95,6 +97,8 @@ namespace Sample
 			//Setup profiling tracks
 			if(profiler != null)
 			{
+				mainProfilerTrack = profiler.CreateTrack<ProfileTrack>("SampleController Update-method");
+				completeProfilerTrack = profiler.CreateTrack<ProfileTrack>("Completing on main-thread");
 				partitionCubesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Partition cubes");
 				moveCubesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Move cubes");
 				calculateMatricesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Calculate matrices");
@@ -109,15 +113,22 @@ namespace Sample
 			if(taskManager == null)
 				return;
 
+			//Mark 'start-work' on the main time-line track
+			mainProfilerTrack.LogStartWork();
+
 			//---> Update target info based on the linked-in transform
 			UpdateTargetInfo();
 
 			//---> Render the data from the previous tasks
 			if(completeDependency != null)
 			{
-				//Wait for (and help out with) completing the tasks from the previous frame
-				completeDependency.Complete();
-
+				completeProfilerTrack.LogStartWork();
+				{
+					//Wait for (and help out with) completing the tasks from the previous frame
+					completeDependency.Complete();
+				}
+				completeProfilerTrack.LogEndWork();
+				
 				//Render the results from the previous tasks
 				renderSet.Render();
 				renderSet.Clear();
@@ -188,6 +199,9 @@ namespace Sample
 
 			//---> Setup the finish dependency
 			completeDependency = new DependencySet(respawnCubesDep, addToRenderSetDep);
+
+			//Mark 'stop-work' on the main time-line track
+			mainProfilerTrack.LogEndWork();
 		}
 
 		protected void OnDestroy()

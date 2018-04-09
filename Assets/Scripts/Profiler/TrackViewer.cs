@@ -21,15 +21,19 @@ namespace Profiler
 		}
 
 		public float CurrentTime { get { return (float)timer.Elapsed.TotalSeconds; } }
-		public float LeftTime { get { return CurrentTime - timeRange; } }
-		public float RightTime { get { return CurrentTime; } }
+		public float LeftTime { get { return RightTime - timeRange; } }
+		public float RightTime { get { return viewTime; } }
 
-		[SerializeField] private float timeRange = 1f;
+		[Range(.01f, 1f)]
+		[SerializeField] private float timeRange = .5f;
+		[SerializeField] private bool paused;
 
 		private readonly List<TrackEntry> tracks = new List<TrackEntry>();
 		private readonly Stopwatch timer = new Stopwatch();
 		private readonly List<TrackItem> itemCache = new List<TrackItem>();
+		private readonly Color[] trackColors = new Color[] { Color.blue, Color.green, Color.yellow, Color.cyan, Color.magenta, Color.red };
 
+		private float viewTime;
 		private bool started;
 
 		public T CreateTrack<T>(string label) where T : ProfileTrack, new()
@@ -49,17 +53,33 @@ namespace Profiler
 
 		public void Draw(Rect rect)
 		{
+			const float HEADER_HEIGHT = 20f;
+			const float SPACING = 10f;
+
 			if(!started)
 			{
 				GUI.Label(rect, "Not yet started");
 				return;
 			}
+			if(!paused)
+				viewTime = CurrentTime;
 
-			float trackHeight = (rect.height / tracks.Count) - 10;
 			for (int i = 0; i < tracks.Count; i++)
 			{
-				Rect itemRect = new Rect(rect.x, rect.y + (rect.height / tracks.Count) * i, rect.width, trackHeight);
-				DrawTrack(itemRect, tracks[i], LeftTime, RightTime, CurrentTime);
+				Rect itemRect = new Rect(rect.x, rect.y + (rect.height / tracks.Count) * i, rect.width, (rect.height / tracks.Count) - SPACING);
+
+				//Draw header
+				GUI.color = Color.white;
+				GUI.Label(new Rect(itemRect.x, itemRect.y, itemRect.width, HEADER_HEIGHT), tracks[i].Label);
+				
+				//Draw content
+				Rect contentRect = new Rect(itemRect.x, itemRect.y + HEADER_HEIGHT, itemRect.width, Mathf.Max(1f, itemRect.height - HEADER_HEIGHT));
+
+				GUI.color = Color.gray;
+				GUI.DrawTexture(contentRect, Texture2D.whiteTexture);
+
+				GUI.color = trackColors[Mathf.Min(i, trackColors.Length - 1)];
+				DrawTrack(contentRect, tracks[i], LeftTime, RightTime, CurrentTime);
 			}
 		}
 

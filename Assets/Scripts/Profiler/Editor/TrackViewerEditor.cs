@@ -17,6 +17,12 @@ namespace Profiler
 			if(viewer != null)
 			{
 				Rect rect = GUILayoutUtility.GetRect(TIMELINE_WIDTH, TIMELINE_HEIGHT);
+
+				//Draw background
+				GUI.Box(rect, GUIContent.none);
+
+				//Draw content
+				GUI.color = Color.white;
 				viewer.Draw(rect);
 
 				//Keep refreshing
