@@ -7,22 +7,26 @@ namespace Profiler
 {
 	public class ProfileTrack
 	{
-		private struct Item
-		{
-			public TimeSpan StartOffset;
-			public TimeSpan StopOffset;
-			public bool Running;
-		}
-
 		private readonly Stopwatch stopWatch = new Stopwatch();
 		private readonly ReaderWriterLockSlim threadLock = new ReaderWriterLockSlim();
-		private readonly List<Item> items = new List<Item>();
+		private readonly List<TrackItem> items = new List<TrackItem>();
 		private bool started;
 
 		public void StartTimer()
 		{
 			stopWatch.Start();
 			started = true;
+		}
+
+		public void GetItems(List<TrackItem> outputList)
+		{
+			outputList.Clear();
+			threadLock.EnterReadLock();
+			{
+				for (int i = 0; i < items.Count; i++)
+					outputList.Add(items[i]);
+			}
+			threadLock.ExitReadLock();
 		}
 
 		public void LogStartWork()
@@ -32,10 +36,10 @@ namespace Profiler
 				if(!started)
 					throw new Exception("[ProfileTrack] Unable to log start-work: 'Timer' not yet started");
 			
-				if(items[items.Count - 1].Running)
+				if(items.Count > 0 && items[items.Count - 1].Running)
 					throw new Exception("[ProfileTrack] Unable to log start-work: Last item is still running");
 
-				items.Add(new Item { StartOffset = stopWatch.Elapsed, Running = true });
+				items.Add(new TrackItem { StartTime = (float)stopWatch.Elapsed.TotalSeconds, Running = true });
 			}
 			threadLock.ExitWriteLock();
 		}
@@ -44,12 +48,15 @@ namespace Profiler
 		{
 			threadLock.EnterWriteLock();
 			{
-				Item lastItem = items[items.Count - 1];
+				if(items.Count == 0)
+					throw new Exception("[ProfileTrack] Unable to log end-work: No item started yet");
+
+				TrackItem lastItem = items[items.Count - 1];
 				if(!lastItem.Running)
 					throw new Exception("[ProfileTrack] Unable to log end-work: No running item");
 				
 				lastItem.Running = false;
-				lastItem.StopOffset = stopWatch.Elapsed;
+				lastItem.StopTime = (float)stopWatch.Elapsed.TotalSeconds;
 				items[items.Count - 1] = lastItem;
 			}
 			threadLock.ExitWriteLock();

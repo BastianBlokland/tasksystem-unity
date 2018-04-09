@@ -34,5 +34,10 @@ namespace Utils
 			float invSqrRoot = FastInvSqrRoot(sqrMag);
 			return new Vector2(vector.x * invSqrRoot, vector.y * invSqrRoot);
 		}
+
+		public static bool DoesRangeOverlap(float aStart, float aEnd, float bStart, float bEnd)
+		{
+			return aEnd >= bStart && aStart <= bEnd;
+		}
 	}
 }

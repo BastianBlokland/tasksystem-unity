@@ -100,6 +100,7 @@ namespace Sample
 				calculateMatricesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Calculate matrices");
 				respawnCubesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Respawn cubes");
 				addToRenderSetProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Creating render-set");
+				profiler.Start();
 			}
 		}
 
