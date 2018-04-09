@@ -17,7 +17,7 @@ namespace Tasks
 		public IDependency ScheduleSingle(ITask task, IDependency dependency = null)
 		{
 			SingleTaskHandle handle = new SingleTaskHandle(task, runner);
-			if(dependency == null || dependency.IsComplete)
+			if(dependency == null || dependency.IsCompleted)
 				handle.Schedule(batchSize: 1);
 			else
 				dependency.Completed += () => handle.Schedule(batchSize: 1);
@@ -28,7 +28,7 @@ namespace Tasks
 			where T1 : struct
 		{
 			ArrayTaskHandle<T1> handle = new ArrayTaskHandle<T1>(data, task, runner);	
-			if(dependency == null || dependency.IsComplete)
+			if(dependency == null || dependency.IsCompleted)
 				handle.Schedule(batchSize);
 			else
 				dependency.Completed += () => handle.Schedule(batchSize);
@@ -40,7 +40,7 @@ namespace Tasks
 			where T2 : struct
 		{
 			ArrayTaskHandle<T1, T2> handle = new ArrayTaskHandle<T1, T2>(data1, data2, task, runner);
-			if(dependency == null || dependency.IsComplete)
+			if(dependency == null || dependency.IsCompleted)
 				handle.Schedule(batchSize);
 			else
 				dependency.Completed += () => handle.Schedule(batchSize);

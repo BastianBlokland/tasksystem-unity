@@ -7,14 +7,17 @@ namespace Tasks
 	{
 		//NOTE: VERY important to realize that this can be called from any thread
 		public event Action Completed = delegate {};
+		//NOTE: VERY important to realize that this can be called from any thread
+		public event Action Scheduled = delegate {};
 
-		public bool IsComplete { get { return isComplete; } }
+		public bool IsCompleted { get { return isCompleted; } }
+		public bool IsScheduled { get { return isScheduled; } }
 
 		private readonly int length;
 		private readonly TaskRunner runner;
 
-		private bool isScheduled;
-		private volatile bool isComplete;
+		private volatile bool isCompleted;
+		private volatile bool isScheduled;
 		private int tasksLeft;
 
 		public BaseTaskHandle(int length, TaskRunner runner)
@@ -37,11 +40,12 @@ namespace Tasks
 				runner.Schedule(this, start, end >= length ? (length - 1) : end);
 			}
 			isScheduled = true;
+			Scheduled();
 		}
 
 		public void Complete()
 		{
-			while(!isComplete)
+			while(!isCompleted)
 				runner.Help();
 		}
 
@@ -53,7 +57,7 @@ namespace Tasks
 
 			if(Interlocked.Decrement(ref tasksLeft) == 0)
 			{
-				isComplete = true;
+				isCompleted = true;
 				Completed();
 			}
 		}
