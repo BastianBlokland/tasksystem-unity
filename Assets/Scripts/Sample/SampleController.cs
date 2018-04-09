@@ -9,7 +9,7 @@ namespace Sample
 	public class SampleController : MonoBehaviour
 	{
 		//---> Config
-		[SerializeField] private TrackViewer profiler;
+		[SerializeField] private Timeline profiler;
 		[SerializeField] private Mesh mesh;
 		[SerializeField] private Material material;
 		[SerializeField] private Transform targetTrans;
@@ -54,13 +54,13 @@ namespace Sample
 		private Vector2 targetVelocity;
 
 		//---> Profiling tracks
-		private ProfileTrack mainProfilerTrack;
-		private ProfileTrack completeProfilerTrack;
-		private TaskProfileTrack partitionCubesProfilerTrack;
-		private TaskProfileTrack moveCubesProfilerTrack;
-		private TaskProfileTrack calculateMatricesProfilerTrack;
-		private TaskProfileTrack respawnCubesProfilerTrack;
-		private TaskProfileTrack addToRenderSetProfilerTrack;
+		private TimelineTrack mainProfilerTrack;
+		private TimelineTrack completeProfilerTrack;
+		private TaskTimelineTrack partitionCubesProfilerTrack;
+		private TaskTimelineTrack moveCubesProfilerTrack;
+		private TaskTimelineTrack calculateMatricesProfilerTrack;
+		private TaskTimelineTrack respawnCubesProfilerTrack;
+		private TaskTimelineTrack addToRenderSetProfilerTrack;
 
 		protected void Start()
 		{
@@ -94,16 +94,16 @@ namespace Sample
 			respawnCubeTask = new RespawnCubeTask(spawnPoints);
 			addToRenderSetTask = new AddToRenderSetTask(renderSet);
 
-			//Setup profiling tracks
+			//Setup profiler timeline
 			if(profiler != null)
 			{
-				mainProfilerTrack = profiler.CreateTrack<ProfileTrack>("SampleController Update-method");
-				completeProfilerTrack = profiler.CreateTrack<ProfileTrack>("Completing on main-thread");
-				partitionCubesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Partition cubes");
-				moveCubesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Move cubes");
-				calculateMatricesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Calculate matrices");
-				respawnCubesProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Respawn cubes");
-				addToRenderSetProfilerTrack = profiler.CreateTrack<TaskProfileTrack>("Creating render-set");
+				mainProfilerTrack = profiler.CreateTrack<TimelineTrack>("SampleController Update-method");
+				completeProfilerTrack = profiler.CreateTrack<TimelineTrack>("Completing on main-thread");
+				partitionCubesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Partition cubes");
+				moveCubesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Move cubes");
+				calculateMatricesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Calculate matrices");
+				respawnCubesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Respawn cubes");
+				addToRenderSetProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Creating render-set");
 				profiler.Start();
 			}
 		}
@@ -113,7 +113,6 @@ namespace Sample
 			if(taskManager == null)
 				return;
 
-			//Mark 'start-work' on the main time-line track
 			mainProfilerTrack.LogStartWork();
 
 			//---> Update target info based on the linked-in transform
@@ -152,7 +151,7 @@ namespace Sample
 
 			//---> Schedule tasks for this frame
 			//NOTE: there is no safety yet, so you manually need to check what resources the taska are 
-			//using and setup depenendcies between the tasks accordingly
+			//using and setup dependencies between the tasks accordingly
 			IDependency partitionCubesDep = taskManager.ScheduleArray
 			(
 				data: cubeData, 
@@ -200,7 +199,6 @@ namespace Sample
 			//---> Setup the finish dependency
 			completeDependency = new DependencySet(respawnCubesDep, addToRenderSetDep);
 
-			//Mark 'stop-work' on the main time-line track
 			mainProfilerTrack.LogEndWork();
 		}
 

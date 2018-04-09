@@ -5,11 +5,11 @@ using System.Threading;
 
 namespace Profiler
 {
-	public class ProfileTrack
+	public class TimelineTrack
 	{
 		private readonly Stopwatch stopWatch = new Stopwatch();
 		private readonly ReaderWriterLockSlim threadLock = new ReaderWriterLockSlim();
-		private readonly List<TrackItem> items = new List<TrackItem>();
+		private readonly List<TimelineItem> items = new List<TimelineItem>();
 		private bool started;
 
 		public void StartTimer()
@@ -18,7 +18,7 @@ namespace Profiler
 			started = true;
 		}
 
-		public void GetItems(List<TrackItem> outputList)
+		public void GetItems(List<TimelineItem> outputList)
 		{
 			outputList.Clear();
 			threadLock.EnterReadLock();
@@ -39,7 +39,7 @@ namespace Profiler
 				if(items.Count > 0 && items[items.Count - 1].Running)
 					throw new Exception("[ProfileTrack] Unable to log start-work: Last item is still running");
 
-				items.Add(new TrackItem { StartTime = (float)stopWatch.Elapsed.TotalSeconds, Running = true });
+				items.Add(new TimelineItem { StartTime = (float)stopWatch.Elapsed.TotalSeconds, Running = true });
 			}
 			threadLock.ExitWriteLock();
 		}
@@ -51,7 +51,7 @@ namespace Profiler
 				if(items.Count == 0)
 					throw new Exception("[ProfileTrack] Unable to log end-work: No item started yet");
 
-				TrackItem lastItem = items[items.Count - 1];
+				TimelineItem lastItem = items[items.Count - 1];
 				if(!lastItem.Running)
 					throw new Exception("[ProfileTrack] Unable to log end-work: No running item");
 				

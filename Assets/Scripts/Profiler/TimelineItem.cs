@@ -2,7 +2,7 @@
 
 namespace Profiler
 {
-	public struct TrackItem
+	public struct TimelineItem
 	{
 		public float StartTime;
 		public float StopTime;

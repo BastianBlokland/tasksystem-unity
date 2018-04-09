@@ -1,6 +1,6 @@
 ﻿namespace Profiler
 {
-	public class TaskProfileTrack : ProfileTrack, Tasks.ITracker
+	public class TaskTimelineTrack : TimelineTrack, Tasks.ITracker
 	{
 		public void Track(Tasks.IDependency dependency)
 		{

@@ -6,14 +6,14 @@ using Utils;
 
 namespace Profiler
 {
-	public class TrackViewer : MonoBehaviour
+	public class Timeline : MonoBehaviour
 	{
 		private struct TrackEntry
 		{
 			public readonly string Label;
-			public readonly ProfileTrack Track;
+			public readonly TimelineTrack Track;
 
-			public TrackEntry(string label, ProfileTrack track)
+			public TrackEntry(string label, TimelineTrack track)
 			{
 				Label = label;
 				Track = track;
@@ -30,13 +30,13 @@ namespace Profiler
 
 		private readonly List<TrackEntry> tracks = new List<TrackEntry>();
 		private readonly Stopwatch timer = new Stopwatch();
-		private readonly List<TrackItem> itemCache = new List<TrackItem>();
+		private readonly List<TimelineItem> itemCache = new List<TimelineItem>();
 		private readonly Color[] trackColors = new Color[] { Color.blue, Color.green, Color.yellow, Color.cyan, Color.magenta, Color.red };
 
 		private float viewTime;
 		private bool started;
 
-		public T CreateTrack<T>(string label) where T : ProfileTrack, new()
+		public T CreateTrack<T>(string label) where T : TimelineTrack, new()
 		{
 			T newTrack = new T();
 			tracks.Add(new TrackEntry(label, newTrack));
@@ -78,7 +78,7 @@ namespace Profiler
 				GUI.color = Color.gray;
 				GUI.DrawTexture(contentRect, Texture2D.whiteTexture);
 
-				GUI.color = trackColors[Mathf.Min(i, trackColors.Length - 1)];
+				GUI.color = trackColors[i % trackColors.Length];
 				DrawTrack(contentRect, tracks[i], LeftTime, RightTime, CurrentTime);
 			}
 		}
@@ -88,7 +88,7 @@ namespace Profiler
 			trackEntry.Track.GetItems(itemCache);
 			for (int i = 0; i < itemCache.Count; i++)
 			{
-				TrackItem item = itemCache[i];
+				TimelineItem item = itemCache[i];
 				bool inView = MathUtils.DoesRangeOverlap(item.StartTime, item.StopTime, leftTime, rightTime);
 				if(inView)
 				{
