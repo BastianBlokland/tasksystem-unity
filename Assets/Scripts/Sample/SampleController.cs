@@ -40,6 +40,7 @@ namespace Sample
 		private IRandomProvider random;
 
 		//---> Tasks
+		private StartFrameTask startTask;
 		private PartitionCubeTask partitionCubeTask;
 		private MoveCubeTask moveCubeTask;
 		private RespawnCubeTask respawnCubeTask;
@@ -78,6 +79,7 @@ namespace Sample
 			random = new ShiftRandomProvider();
 
 			//Create tasks
+			startTask = new StartFrameTask();
 			partitionCubeTask = new PartitionCubeTask(partitionedCubes, avoidancePartitioner);
 			moveCubeTask = new MoveCubeTask(avoidancePartitioner, partitionedCubes);
 			respawnCubeTask = new RespawnCubeTask(random);
@@ -148,12 +150,16 @@ namespace Sample
 			//---> Schedule tasks for this frame
 			//NOTE: there is no safety yet, so you manually need to check what resources the taska are 
 			//using and setup dependencies between the tasks accordingly
+			IDependency startDep = taskManager.ScheduleSingle
+			(
+				task: startTask
+			);
 			IDependency partitionCubesDep = taskManager.ScheduleArray
 			(
 				data: cubeData, 
 				task: partitionCubeTask, 
 				batchSize: batchSize,
-				dependency: null,
+				dependency: startDep,
 				tracker: partitionCubesProfilerTrack
 			);
 			IDependency updateCubeDep = taskManager.ScheduleArray
