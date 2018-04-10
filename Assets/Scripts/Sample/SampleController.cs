@@ -13,7 +13,7 @@ namespace Sample
 		[SerializeField] private Mesh mesh;
 		[SerializeField] private Material material;
 		[SerializeField] private Transform targetTrans;
-		[SerializeField] private int executorCount = 7;
+		[SerializeField] private bool useMultiThreading = true;
 		[SerializeField] private int batchSize = 100;
 		[SerializeField] private int cubeCount = 35000;
 		[SerializeField] private Vector2 spawnAreaSize = new Vector2(200f, 200f);
@@ -73,7 +73,9 @@ namespace Sample
 			renderSet = new RenderSet(mesh, material);
 
 			//Create misc stuff
-			taskManager = new TaskManager(executorCount);
+			int numExecutors = useMultiThreading ? (System.Environment.ProcessorCount - 1) : 0;
+			Debug.Log(string.Format("[SampleController] Staring 'TaskManager' with '{0}' executors", numExecutors));
+			taskManager = new TaskManager(numExecutors);
 			avoidancePartitioner = new GridPartitioner();
 			renderPartitioner = new GridPartitioner();
 			random = new ShiftRandomProvider();
