@@ -16,8 +16,7 @@ namespace Sample
 		[SerializeField] private int executorCount = 7;
 		[SerializeField] private int batchSize = 50;
 		[SerializeField] private int cubeCount = 35000;
-		[SerializeField] private float minInitialSpawnPoint = -100f;
-		[SerializeField] private float maxInitialSpawnPoint = 100f;
+		[SerializeField] private Vector2 spawnAreaSize = new Vector2(200f, 200f);
 		[SerializeField] private float minPartitionSize = 3f;
 		[SerializeField] private float maxPartitionSize = 4f;
 		[SerializeField] private float cubeRadius = 1.25f;
@@ -29,7 +28,6 @@ namespace Sample
 		[SerializeField] private float maxDistanceBeforeRespawn = 200f;
 
 		//---> Buffers
-		private Vector2[] spawnPoints;
 		private CubeData[] cubeData;
 		private Matrix4x4[] cubeMatrices;
 		private PartitionSet<CubeData> partitionedCubes;
@@ -38,6 +36,7 @@ namespace Sample
 		//---> Misc
 		private TaskManager taskManager;
 		private GridPartitioner gridPartitioner;
+		private IRandomProvider random;
 
 		//---> Tasks
 		private PartitionCubeTask partitionCubeTask;
@@ -69,29 +68,21 @@ namespace Sample
 			if(targetTrans == null) { Debug.LogError("[SampleController] No 'targetTrans' provided"); return; }
 			
 			//Allocate arrays
-			spawnPoints = new Vector2[cubeCount];
 			cubeData = new CubeData[cubeCount];
 			cubeMatrices = new Matrix4x4[cubeCount];
 			partitionedCubes = new PartitionSet<CubeData>();
 			renderSet = new RenderSet(mesh, material);
 
-			//Setup initial data
-			for (int i = 0; i < cubeCount; i++)
-			{
-				spawnPoints[i] = new Vector2(	Random.Range(minInitialSpawnPoint, maxInitialSpawnPoint), 
-												Random.Range(minInitialSpawnPoint, maxInitialSpawnPoint));
-				cubeData[i] = new CubeData { ID = i, Position = spawnPoints[i] };
-			}
-
 			//Create misc stuff
 			taskManager = new TaskManager(executorCount);
 			gridPartitioner = new GridPartitioner();
+			random = new ShiftRandomProvider();
 
 			//Create tasks
 			partitionCubeTask = new PartitionCubeTask(partitionedCubes, gridPartitioner);
 			moveCubeTask = new MoveCubeTask(gridPartitioner, partitionedCubes);
 			calculateMatrixTask = new CalculateMatrixTask();
-			respawnCubeTask = new RespawnCubeTask(spawnPoints);
+			respawnCubeTask = new RespawnCubeTask(random);
 			addToRenderSetTask = new AddToRenderSetTask(renderSet);
 
 			//Setup profiler timeline
@@ -106,6 +97,11 @@ namespace Sample
 				addToRenderSetProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Creating render-set");
 				profiler.Start();
 			}
+
+			//Setup initial data
+			Rect spawnArea = MathUtils.FromCenterAndSize(Vector2.zero, spawnAreaSize);
+			for (int i = 0; i < cubeCount; i++)
+				cubeData[i] = new CubeData { ID = i, Position = random.Inside(spawnArea) };
 		}
 
 		protected void Update()
@@ -145,6 +141,7 @@ namespace Sample
 			moveCubeTask.TargetPosition = targetPosition;
 			moveCubeTask.TargetVelocity = targetVelocity;
 			respawnCubeTask.MaxDistance = maxDistanceBeforeRespawn;
+			respawnCubeTask.RespawnArea = MathUtils.FromCenterAndSize(Vector2.zero, spawnAreaSize);
 
 			//---> Clear some data from the previous frame
 			partitionedCubes.ClearData();

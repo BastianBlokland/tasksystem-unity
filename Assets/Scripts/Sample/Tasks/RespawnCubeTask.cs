@@ -8,12 +8,13 @@ namespace Sample
 	public class RespawnCubeTask : ITask<CubeData>
 	{
 		public float MaxDistance = 200f;
+		public Rect RespawnArea = new Rect(Vector2.zero, new Vector2(200f, 200f));
 
-		private readonly Vector2[] spawnPoints;
+		private readonly IRandomProvider random;
 
-		public RespawnCubeTask(Vector2[] spawnPoints)
+		public RespawnCubeTask(IRandomProvider random)
 		{
-			this.spawnPoints = spawnPoints;
+			this.random = random;
 		}
 
 		public void Execute(ref CubeData data)
@@ -23,7 +24,7 @@ namespace Sample
 				data = new CubeData
 				{
 					ID = data.ID,
-					Position = spawnPoints[data.ID],
+					Position = random.Inside(RespawnArea),
 					Velocity = Vector2.zero
 				};
 			}	

@@ -39,5 +39,10 @@ namespace Utils
 		{
 			return aEnd >= bStart && aStart <= bEnd;
 		}
+
+		public static Rect FromCenterAndSize(Vector2 center, Vector2 size)
+		{
+			return new Rect(center - (size * .5f), size);
+		}
 	}
 }
