@@ -35,6 +35,11 @@ namespace Tasks
 			if(batchSize <= 0) 
 				batchSize = 1;
 
+			//NOTE: Fire the scheduled event BEFORE actually scheduling otherwise a task could be completed before
+			//ever firing this event, you gotta love mult-threading :)
+			isScheduled = true;
+			Scheduled();
+
 			tasksLeft = length;
 			int startOffset = batchSize - 1;
 			for (int i = 0; i < length; i += batchSize)
@@ -43,8 +48,6 @@ namespace Tasks
 				int end = start + startOffset;
 				runner.Schedule(this, start, end >= length ? (length - 1) : end);
 			}
-			isScheduled = true;
-			Scheduled();
 		}
 
 		public void Complete()
