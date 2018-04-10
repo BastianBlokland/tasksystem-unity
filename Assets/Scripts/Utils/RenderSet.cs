@@ -1,16 +1,17 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
 namespace Utils
 {
-	public class RenderSet : IDisposable
+	public class RenderSet
 	{
 		//1023, is the max render count for a single call (https://docs.unity3d.com/ScriptReference/Graphics.DrawMeshInstanced.html)
 		private const int CHUNK_SIZE = 1023;
 
-		private struct Chunk
+		private class Chunk
 		{
 			public Matrix4x4[] Data;
 			public int Count;
@@ -19,8 +20,7 @@ namespace Utils
 		private readonly Mesh mesh;
 		private readonly Material material;
 
-		private readonly ReaderWriterLockSlim threadLock = new ReaderWriterLockSlim();
-		private List<Chunk> chunks = new List<Chunk>();
+		private readonly ConcurrentDictionary<int, Chunk> chunks = new ConcurrentDictionary<int, Chunk>();
 
 		public RenderSet(Mesh mesh, Material material)
 		{
@@ -28,50 +28,30 @@ namespace Utils
 			this.material = material;
 		}
 
-		public void Add(Matrix4x4 matrix)
+		/// <summary>
+		/// Important note: Every partition can only contain a maximum of 1023 elements!
+		/// </summary>
+		public void Add(int partition, Matrix4x4 matrix)
 		{
-			threadLock.EnterWriteLock();
+			Chunk chunk = chunks.GetOrAdd(partition, (key) => new Chunk { Data = new Matrix4x4[CHUNK_SIZE], Count = 0 });
+			lock(chunk)
 			{
-				bool added = false;
-				for (int i = 0; i < chunks.Count; i++)
+				//NOTE: Very important to realize that we DON'T render the object if there is no space in the chunk anymore
+				if(chunk.Count < CHUNK_SIZE)
 				{
-					Chunk chunk = chunks[i];
-					if(chunk.Count < CHUNK_SIZE)
-					{
-						chunk.Data[chunk.Count] = matrix;
-						chunk.Count++;
-						chunks[i] = chunk;
-						added = true;
-						break;
-					}
-				}
-
-				if(!added)
-				{
-					Chunk newChunk = new Chunk
-					{
-						Data = new Matrix4x4[CHUNK_SIZE],
-						Count = 1
-					};
-					newChunk.Data[0] = matrix;
-					chunks.Add(newChunk);
+					chunk.Data[chunk.Count] = matrix;
+					chunk.Count++;
 				}
 			}
-			threadLock.ExitWriteLock();
 		}
 
 		public void Clear()
 		{
-			threadLock.EnterWriteLock();
+			foreach(KeyValuePair<int, Chunk> kvp in chunks)
 			{
-				for (int i = 0; i < chunks.Count; i++)
-				{
-					Chunk chunk = chunks[i];
-					chunk.Count = 0;
-					chunks[i] = chunk;
-				}
+				lock(kvp.Value)
+					kvp.Value.Count = 0;
 			}
-			threadLock.ExitWriteLock();
 		}
 
 		public void Render()
@@ -81,21 +61,14 @@ namespace Utils
 			if(material == null)
 				throw new Exception("[RenderSet] Unable to render: Material is null!");
 				
-			threadLock.EnterReadLock();
+			foreach(KeyValuePair<int, Chunk> kvp in chunks)
 			{
-				for (int i = 0; i < chunks.Count; i++)
+				lock(kvp.Value)
 				{
-					Chunk chunk = chunks[i];
-					if(chunk.Count > 0)
-						Graphics.DrawMeshInstanced(mesh, 0, material, chunk.Data, chunk.Count);
+					if(kvp.Value.Count > 0)
+						Graphics.DrawMeshInstanced(mesh, 0, material, kvp.Value.Data, kvp.Value.Count);
 				}
 			}
-			threadLock.ExitReadLock();
-		}
-
-		public void Dispose()
-		{
-			threadLock.Dispose();
 		}
 	}
 }
