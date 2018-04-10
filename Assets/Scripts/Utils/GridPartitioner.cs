@@ -34,7 +34,14 @@ namespace Utils
 
 		public int Partition(float value)
 		{
-			return (int)((value + partitionSize * fuzz) / partitionSize);
+			float resultFloat = (value + partitionSize * fuzz) / partitionSize;
+
+			//Note: Push away from 0 as we don't want partition 0 (it will make the above logic for Vector2's fail)
+			if(resultFloat > 0)
+				resultFloat += 1f;
+			else
+				resultFloat -= 1f;
+			return (int)resultFloat;
 		}
 	}
 }
