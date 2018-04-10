@@ -10,11 +10,19 @@ namespace Utils
 			set { partitionSize = value; }
 		}
 
+		public float Fuzz
+		{
+			get { return fuzz; }
+			set { fuzz = value; }
+		}
+
 		private float partitionSize;
+		private float fuzz;
 
 		public GridPartitioner(float partitionSize = 10)
 		{
 			this.partitionSize = partitionSize;
+			this.fuzz = 0;
 		}
 
 		public int Partition(Vector2 value)
@@ -24,7 +32,7 @@ namespace Utils
 
 		public int Partition(float value)
 		{
-			return Mathf.RoundToInt(value / partitionSize);
+			return Mathf.RoundToInt((value + partitionSize * fuzz) / partitionSize);
 		}
 	}
 }

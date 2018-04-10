@@ -367,10 +367,8 @@ MonoBehaviour:
   executorCount: 7
   batchSize: 50
   cubeCount: 35000
-  minInitialSpawnPoint: -125
-  maxInitialSpawnPoint: 125
-  minPartitionSize: 3
-  maxPartitionSize: 4
+  spawnAreaSize: {x: 200, y: 200}
+  partitionSize: 2
   cubeRadius: 1.25
   cubeSeperationForce: 1
   cubeVeloInheritance: 0.6
@@ -418,7 +416,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9aa1841c7e1b04d8498e18c5e1abdb77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  timeRange: 0.5
+  timeRange: 0.25
+  paused: 0
 --- !u!1 &1592471117
 GameObject:
   m_ObjectHideFlags: 0

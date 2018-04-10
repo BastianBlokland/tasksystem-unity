@@ -14,11 +14,10 @@ namespace Sample
 		[SerializeField] private Material material;
 		[SerializeField] private Transform targetTrans;
 		[SerializeField] private int executorCount = 7;
-		[SerializeField] private int batchSize = 50;
+		[SerializeField] private int batchSize = 100;
 		[SerializeField] private int cubeCount = 35000;
 		[SerializeField] private Vector2 spawnAreaSize = new Vector2(200f, 200f);
-		[SerializeField] private float minPartitionSize = 3f;
-		[SerializeField] private float maxPartitionSize = 4f;
+		[SerializeField] private float partitionSize = 2f;
 		[SerializeField] private float cubeRadius = 1.25f;
 		[SerializeField] private float cubeSeperationForce = 2f;
 		[SerializeField] private float cubeVeloInheritance = .75f;
@@ -130,7 +129,8 @@ namespace Sample
 			}
 
 			//---> Update the tasks with info from the inspector
-			gridPartitioner.PartitionSize = Random.Range(minPartitionSize, maxPartitionSize); //Randomize to make the grid less noticeable
+			gridPartitioner.PartitionSize = partitionSize;
+			gridPartitioner.Fuzz = random.GetNext(); //Apply random fuzz to make the grid less noticable
 			moveCubeTask.CubeRadius = cubeRadius;
 			moveCubeTask.CubeSeperationForce = cubeSeperationForce;
 			moveCubeTask.CubeVeloInheritance = cubeVeloInheritance;
