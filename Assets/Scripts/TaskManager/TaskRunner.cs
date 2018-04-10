@@ -13,7 +13,11 @@ namespace Tasks
 		public TaskRunner(int executorCount)
 		{
 			for(int i = 0; i < executorCount; i++)
-				new Thread(ThreadExecutor).Start();
+			{
+				Thread executorThread = new Thread(ThreadExecutor);
+				executorThread.Priority = ThreadPriority.Highest;
+				executorThread.Start();
+			}
 		}
 
 		public void Schedule(IExecutor executor, int minIndex, int maxIndex)
