@@ -30,16 +30,16 @@ namespace Sample
 		{
 			//Avoid others in our partition
 			int partition = partitioner.Partition(data.Position);
-			List<CubeData> neighbours = others.Get(partition);
+			SubArray<CubeData> neighbours = others.Get(partition);
 			if(neighbours != null)
 			{
 				for (int i = 0; i < neighbours.Count; i++)
 				{
 					//Skip ourselves
-					if(neighbours[i].ID == data.ID)
+					if(neighbours.Data[i].ID == data.ID)
 						continue;
 
-					Avoid(ref data, neighbours[i].Position, CubeRadius, neighbours[i].Velocity, CubeSeperationForce, CubeVeloInheritance);
+					Avoid(ref data, neighbours.Data[i].Position, CubeRadius, neighbours.Data[i].Velocity, CubeSeperationForce, CubeVeloInheritance);
 				}
 			}
 

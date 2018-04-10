@@ -11,16 +11,9 @@ namespace Utils
 		//1023, is the max render count for a single call (https://docs.unity3d.com/ScriptReference/Graphics.DrawMeshInstanced.html)
 		private const int CHUNK_SIZE = 1023;
 
-		private class Chunk
-		{
-			public Matrix4x4[] Data;
-			public int Count;
-		}
-
 		private readonly Mesh mesh;
 		private readonly Material material;
-
-		private readonly ConcurrentDictionary<int, Chunk> chunks = new ConcurrentDictionary<int, Chunk>();
+		private readonly ConcurrentDictionary<int, SubArray<Matrix4x4>> chunks = new ConcurrentDictionary<int, SubArray<Matrix4x4>>();
 
 		public RenderSet(Mesh mesh, Material material)
 		{
@@ -33,24 +26,20 @@ namespace Utils
 		/// </summary>
 		public void Add(int partition, Matrix4x4 matrix)
 		{
-			Chunk chunk = chunks.GetOrAdd(partition, (key) => new Chunk { Data = new Matrix4x4[CHUNK_SIZE], Count = 0 });
+			SubArray<Matrix4x4> chunk = chunks.GetOrAdd(partition, (key) => new SubArray<Matrix4x4>(CHUNK_SIZE) );
 			lock(chunk)
 			{
 				//NOTE: Very important to realize that we DON'T render the object if there is no space in the chunk anymore
-				if(chunk.Count < CHUNK_SIZE)
-				{
-					chunk.Data[chunk.Count] = matrix;
-					chunk.Count++;
-				}
+				chunk.Add(matrix);
 			}
 		}
 
 		public void Clear()
 		{
-			foreach(KeyValuePair<int, Chunk> kvp in chunks)
+			foreach(KeyValuePair<int, SubArray<Matrix4x4>> kvp in chunks)
 			{
 				lock(kvp.Value)
-					kvp.Value.Count = 0;
+					kvp.Value.Clear();
 			}
 		}
 
@@ -61,7 +50,7 @@ namespace Utils
 			if(material == null)
 				throw new Exception("[RenderSet] Unable to render: Material is null!");
 				
-			foreach(KeyValuePair<int, Chunk> kvp in chunks)
+			foreach(KeyValuePair<int, SubArray<Matrix4x4>> kvp in chunks)
 			{
 				lock(kvp.Value)
 				{

@@ -9,27 +9,33 @@ namespace Utils
 	public class PartitionSet<T>
 		where T : struct
 	{
-		private readonly ConcurrentDictionary<int, List<T>> entries = new ConcurrentDictionary<int, List<T>>();
+		private readonly int maxPartitionEntryCount;
+		private readonly ConcurrentDictionary<int, SubArray<T>> entries = new ConcurrentDictionary<int, SubArray<T>>();
+
+		public PartitionSet(int maxPartitionEntryCount = 100)
+		{
+			this.maxPartitionEntryCount = maxPartitionEntryCount;
+		}
 
 		public void Add(int partition, T data)
 		{
-			List<T> entryList = entries.GetOrAdd(partition, (key) => new List<T>());
-			lock(entryList)
+			SubArray<T> entry = entries.GetOrAdd(partition, (key) => new SubArray<T>(maxPartitionEntryCount));
+			lock(entry)
 			{
-				entryList.Add(data);
+				entry.Add(data);
 			}
 		}
 
-		public List<T> Get(int partition)
+		public SubArray<T> Get(int partition)
 		{
-			List<T> result = null;
+			SubArray<T> result = null;
 			entries.TryGetValue(partition, out result);
 			return result;
 		}
 
 		public void Clear()
 		{
-			foreach(KeyValuePair<int, List<T>> entry in entries)
+			foreach(KeyValuePair<int, SubArray<T>> entry in entries)
 			{
 				lock(entry.Value)
 					entry.Value.Clear();
