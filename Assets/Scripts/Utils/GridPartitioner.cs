@@ -4,10 +4,12 @@ namespace Utils
 {
 	public class GridPartitioner
 	{
+		private const float MIN_PARTITION_SIZE = .001f;
+
 		public float PartitionSize
 		{
 			get { return partitionSize; }
-			set { partitionSize = value; }
+			set { partitionSize = Mathf.Max(MIN_PARTITION_SIZE, value); }
 		}
 
 		public float Fuzz
@@ -21,7 +23,7 @@ namespace Utils
 
 		public GridPartitioner(float partitionSize = 10)
 		{
-			this.partitionSize = partitionSize;
+			this.partitionSize = Mathf.Max(MIN_PARTITION_SIZE, partitionSize);
 			this.fuzz = 0;
 		}
 
@@ -32,7 +34,7 @@ namespace Utils
 
 		public int Partition(float value)
 		{
-			return Mathf.RoundToInt((value + partitionSize * fuzz) / partitionSize);
+			return (int)((value + partitionSize * fuzz) / partitionSize);
 		}
 	}
 }
