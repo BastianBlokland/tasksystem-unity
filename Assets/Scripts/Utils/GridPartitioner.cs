@@ -5,6 +5,7 @@ namespace Utils
 	public class GridPartitioner
 	{
 		private const float MIN_PARTITION_SIZE = .001f;
+		private const int MAX_COLUMN_COUNT = 45000; //Grid of this by this will still fit in a int32
 
 		public float PartitionSize
 		{
@@ -29,7 +30,7 @@ namespace Utils
 
 		public int Partition(Vector2 value)
 		{
-			return Partition(value.x) * Partition(value.y);
+			return Partition(value.x) * MAX_COLUMN_COUNT + Partition(value.y);
 		}
 
 		public int Partition(float value)
