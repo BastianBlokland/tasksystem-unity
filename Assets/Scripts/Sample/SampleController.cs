@@ -94,7 +94,7 @@ namespace Sample
 				calculateMatricesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Calculate matrices");
 				respawnCubesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Respawn cubes");
 				addToRenderSetProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Creating render-set");
-				profiler.Start();
+				profiler.StartTimers();
 			}
 
 			//Setup initial data

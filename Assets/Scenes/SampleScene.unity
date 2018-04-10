@@ -342,6 +342,8 @@ GameObject:
   - component: {fileID: 1249463137}
   - component: {fileID: 1249463139}
   - component: {fileID: 1249463140}
+  - component: {fileID: 1249463141}
+  - component: {fileID: 1249463142}
   m_Layer: 0
   m_Name: Sample
   m_TagString: Untagged
@@ -416,8 +418,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9aa1841c7e1b04d8498e18c5e1abdb77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1249463141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1249463136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 378c2b1cd75e44b5498243276c759a64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeline: {fileID: 1249463140}
   timeRange: 0.25
   paused: 0
+--- !u!114 &1249463142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1249463136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b57ebf333824e4254a62bbe45656eafa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeline: {fileID: 1249463140}
+  minDuration: 0
+  maxDuration: 0.075
 --- !u!1 &1592471117
 GameObject:
   m_ObjectHideFlags: 0
