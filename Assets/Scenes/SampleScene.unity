@@ -165,7 +165,7 @@ Camera:
   far clip plane: 50
   field of view: 60
   orthographic: 1
-  orthographic size: 150
+  orthographic size: 275
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -301,20 +301,20 @@ MonoBehaviour:
   mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   material: {fileID: 2100000, guid: cffd92310e1b844d7a51a4d639a761c6, type: 2}
   targetTrans: {fileID: 1592471118}
-  executorCount: 7
+  useMultiThreading: 1
   batchSize: 50
   cubeCount: 50000
-  spawnAreaSize: {x: 225, y: 225}
-  avoidancePartitionSize: 5
-  avoidanceMaxNeighbourCount: 10
+  spawnAreaSize: {x: 400, y: 400}
+  avoidancePartitionSize: 6
+  avoidanceMaxNeighbourCount: 4
   cubeRadius: 1
   cubeSeperationForce: 1
   cubeVeloInheritance: 0.6
   targetRadius: 5
   targetSeperationForce: 15
   targetVeloInheritance: 1
-  maxDistanceBeforeRespawn: 200
-  renderPartitionSize: 20
+  maxDistanceBeforeRespawn: 300
+  renderPartitionSize: 25
 --- !u!4 &1249463138
 Transform:
   m_ObjectHideFlags: 0
@@ -323,7 +323,7 @@ Transform:
   m_GameObject: {fileID: 1249463136}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children:
   - {fileID: 1592471118}
   m_Father: {fileID: 0}
