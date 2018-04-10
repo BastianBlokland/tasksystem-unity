@@ -47,8 +47,6 @@ namespace Tasks
 					try { action.Execute(); }
 					catch(Exception) { }
 				}
-				else
-					Thread.Sleep(1); //Very short sleep to not 'hog' the cpu
 			}
 		}
 		//----> RUNNING ON SEPARATE THREAD
