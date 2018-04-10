@@ -1,67 +1,39 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
 namespace Utils
 {
-	public class PartitionSet<T> : IDisposable
+	public class PartitionSet<T>
 		where T : struct
 	{
-		private readonly ReaderWriterLockSlim threadLock = new ReaderWriterLockSlim();
-		private readonly Dictionary<int, List<T>> entries = new Dictionary<int, List<T>>();
+		private readonly ConcurrentDictionary<int, List<T>> entries = new ConcurrentDictionary<int, List<T>>();
 
 		public void Add(int partition, T data)
 		{
-			threadLock.EnterWriteLock();
+			List<T> entryList = entries.GetOrAdd(partition, (key) => new List<T>());
+			lock(entryList)
 			{
-				List<T> list;
-				if(!entries.TryGetValue(partition, out list))
-				{
-					list = new List<T>();
-					entries.Add(partition, list);
-				}
-				list.Add(data);
+				entryList.Add(data);
 			}
-			threadLock.ExitWriteLock();
 		}
 
 		public List<T> Get(int partition)
 		{
 			List<T> result = null;
-
-			threadLock.EnterReadLock();
-			{
-				entries.TryGetValue(partition, out result);
-			}
-			threadLock.ExitReadLock();
-
+			entries.TryGetValue(partition, out result);
 			return result;
 		}
 
 		public void Clear()
 		{
-			threadLock.EnterWriteLock();
+			foreach(KeyValuePair<int, List<T>> entry in entries)
 			{
-				entries.Clear();
+				lock(entry.Value)
+					entry.Value.Clear();
 			}
-			threadLock.ExitWriteLock();
-		}
-
-		public void ClearData()
-		{
-			threadLock.EnterWriteLock();
-			{
-				Dictionary<int, List<T>>.Enumerator enumerator = entries.GetEnumerator();
-				while(enumerator.MoveNext())
-					enumerator.Current.Value.Clear();
-			}
-			threadLock.ExitWriteLock();
-		}
-
-		public void Dispose()
-		{
-			threadLock.Dispose();
 		}
 	}
 }

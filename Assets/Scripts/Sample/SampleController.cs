@@ -144,7 +144,7 @@ namespace Sample
 			respawnCubeTask.RespawnArea = MathUtils.FromCenterAndSize(Vector2.zero, spawnAreaSize);
 
 			//---> Clear some data from the previous frame
-			partitionedCubes.ClearData();
+			partitionedCubes.Clear();
 
 			//---> Schedule tasks for this frame
 			//NOTE: there is no safety yet, so you manually need to check what resources the taska are 
@@ -203,8 +203,6 @@ namespace Sample
 		{
 			if(taskManager != null)
 				taskManager.Dispose();
-			if(partitionedCubes != null)
-				partitionedCubes.Dispose();
 			if(renderSet != null)
 				renderSet.Dispose();
 		}
