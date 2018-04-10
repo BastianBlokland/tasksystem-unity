@@ -37,16 +37,13 @@ namespace Profiler
 		{
 			threadLock.EnterWriteLock();
 			{
-				if(!started)
-					throw new Exception("[ProfileTrack] Unable to log start-work: 'Timer' not yet started");
-			
-				if(count > 0 && items[currentItem].Running)
-					throw new Exception("[ProfileTrack] Unable to log start-work: Last item is still running");
-
-				currentItem = (currentItem + 1) % MAX_ITEM_COUNT;
-				if(count < MAX_ITEM_COUNT)
-					count++;
-				items[currentItem] = new TimelineItem { StartTime = (float)stopWatch.Elapsed.TotalSeconds, Running = true };
+				if(started && (count == 0 || !items[currentItem].Running))
+				{
+					currentItem = (currentItem + 1) % MAX_ITEM_COUNT;
+					if(count < MAX_ITEM_COUNT)
+						count++;
+					items[currentItem] = new TimelineItem { StartTime = (float)stopWatch.Elapsed.TotalSeconds, Running = true };
+				}
 			}
 			threadLock.ExitWriteLock();
 		}
@@ -55,16 +52,13 @@ namespace Profiler
 		{
 			threadLock.EnterWriteLock();
 			{
-				if(count == 0)
-					throw new Exception("[ProfileTrack] Unable to log end-work: No item started yet");
-
-				TimelineItem current = items[currentItem];
-				if(!current.Running)
-					throw new Exception("[ProfileTrack] Unable to log end-work: No running item");
-				
-				current.Running = false;
-				current.StopTime = (float)stopWatch.Elapsed.TotalSeconds;
-				items[currentItem] = current;
+				if(count > 0 && items[currentItem].Running)
+				{
+					TimelineItem current = items[currentItem];
+					current.Running = false;
+					current.StopTime = (float)stopWatch.Elapsed.TotalSeconds;
+					items[currentItem] = current;
+				}
 			}
 			threadLock.ExitWriteLock();
 		}
