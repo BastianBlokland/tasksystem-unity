@@ -26,7 +26,8 @@ namespace Profiler
 				timeGraph.Draw(rect);
 
 				//Keep refreshing
-				Repaint();
+				if(Application.isPlaying)
+					Repaint();
 			}
 		}
 	}
