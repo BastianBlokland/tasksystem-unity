@@ -10,36 +10,49 @@ namespace Utils
 		where T : struct
 	{
 		private readonly int maxPartitionEntryCount;
-		private readonly ConcurrentDictionary<int, SubArray<T>> entries = new ConcurrentDictionary<int, SubArray<T>>();
+		private readonly SubArray<T>[] buckets = new SubArray<T>[10000];
 
 		public PartitionSet(int maxPartitionEntryCount = 100)
 		{
 			this.maxPartitionEntryCount = maxPartitionEntryCount;
+
+			for (int i = 0; i < buckets.Length; i++)
+				buckets[i] = new SubArray<T>(maxPartitionEntryCount);
 		}
 
 		public void Add(int partition, T data)
 		{
-			SubArray<T> entry = entries.GetOrAdd(partition, (key) => new SubArray<T>(maxPartitionEntryCount));
-			lock(entry)
+			SubArray<T> bucket = Get(partition);
+			if(bucket != null)
 			{
-				entry.Add(data);
+				lock(bucket)
+				{
+					bucket.Add(data);
+				}
 			}
 		}
 
 		public SubArray<T> Get(int partition)
 		{
-			SubArray<T> result = null;
-			entries.TryGetValue(partition, out result);
-			return result;
+			int bucketNum = GetBucket(partition, buckets.Length);
+			return buckets[bucketNum];
 		}
 
 		public void Clear()
 		{
-			foreach(KeyValuePair<int, SubArray<T>> entry in entries)
+			for (int i = 0; i < buckets.Length; i++)
 			{
-				lock(entry.Value)
-					entry.Value.Clear();
+				lock(buckets[i])
+				{
+					buckets[i].Clear();
+				}
 			}
 		}
+
+		private static int GetBucket(int hashcode, int bucketCount)
+        {
+            int bucketNo = (hashcode & 0x7fffffff) % bucketCount;
+            return bucketNo;
+        }
 	}
 }
