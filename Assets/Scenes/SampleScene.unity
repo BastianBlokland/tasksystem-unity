@@ -371,6 +371,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeline: {fileID: 1249463140}
+  drawInGame: 1
   timeRange: 0.25
   paused: 0
 --- !u!114 &1249463142
@@ -385,8 +386,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeline: {fileID: 1249463140}
+  drawInGame: 1
   minDuration: 0
-  maxDuration: 0.075
+  maxDuration: 0.015
 --- !u!1 &1592471117
 GameObject:
   m_ObjectHideFlags: 0

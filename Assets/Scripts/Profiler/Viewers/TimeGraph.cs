@@ -10,6 +10,7 @@ namespace Profiler
 		public float RightTime { get { return viewTime; } }
 	
 		[SerializeField] private Timeline timeline;
+		[SerializeField] private bool drawInGame;
 		[Range(.01f, 1f)]
 		[SerializeField] private float timeRange = .25f;
 		[SerializeField] private bool paused;
@@ -21,7 +22,7 @@ namespace Profiler
 
 		public void Draw(Rect rect)
 		{
-			const float HEADER_HEIGHT = 15f;
+			const float HEADER_HEIGHT = 20f;
 
 			if(timeline == null)
 			{
@@ -53,6 +54,12 @@ namespace Profiler
 
 		//Implemented to get the 'enabled' tick-box in unity on the component
 		protected void Start() {}
+
+		protected void OnGUI()
+		{
+			if(drawInGame)
+				Draw(new Rect(10f, 10f, 600f, 250f));
+		}
 
 		private void DrawTrack(Rect rect, Color color, Timeline.TrackEntry trackEntry, float leftTime, float rightTime, float currentTime)
 		{

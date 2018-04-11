@@ -7,6 +7,7 @@ namespace Profiler
 	public class DurationGraph : MonoBehaviour
 	{
 		[SerializeField] private Timeline timeline;
+		[SerializeField] private bool drawInGame;
 		[Range(0f, .001f)]
 		[SerializeField] private float minDuration;
 		[Range(.001f, .5f)]
@@ -18,7 +19,7 @@ namespace Profiler
 
 		public void Draw(Rect rect)
 		{
-			const float HEADER_HEIGHT = 15f;
+			const float HEADER_HEIGHT = 20f;
 
 			if(timeline == null)
 			{
@@ -44,6 +45,12 @@ namespace Profiler
 		protected void Start()
 		{
 			linesMat = new Material(Shader.Find("Unlit/Color"));
+		}
+
+		protected void OnGUI()
+		{
+			if(drawInGame)
+				Draw(new Rect(10f, 270f, 600f, 400));
 		}
 
 		protected void OnDestroy()
