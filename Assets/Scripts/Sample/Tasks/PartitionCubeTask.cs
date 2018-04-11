@@ -5,21 +5,21 @@ using Utils;
 
 namespace Sample
 {
-	public class PartitionCubeTask : ITask<CubeData>
+	public class BucketCubeTask : ITask<CubeData>
 	{
-		private readonly PartitionSet<CubeData> partitionSet;
-		private readonly GridPartitioner partitioner;
+		private readonly BucketSet<CubeData> bucketSet;
+		private readonly PositionHasher hasher;
 
-		public PartitionCubeTask(PartitionSet<CubeData> partitionSet, GridPartitioner partitioner)
+		public BucketCubeTask(BucketSet<CubeData> bucketSet, PositionHasher hasher)
 		{
-			this.partitionSet = partitionSet;
-			this.partitioner = partitioner;
+			this.bucketSet = bucketSet;
+			this.hasher = hasher;
 		}
 
 		public void Execute(ref CubeData cubeData)
 		{
-			int partition = partitioner.Partition(cubeData.Position);
-			partitionSet.Add(partition, cubeData);
+			int hash = hasher.Hash(cubeData.Position);
+			bucketSet.Add(hash, cubeData);
 		}
 	}
 }

@@ -17,20 +17,20 @@ namespace Sample
 		public Vector2 TargetPosition;
 		public Vector2 TargetVelocity;
 		
-		private readonly GridPartitioner partitioner;
-		private readonly PartitionSet<CubeData> others;
+		private readonly PositionHasher hasher;
+		private readonly BucketSet<CubeData> others;
 
-		public MoveCubeTask(GridPartitioner partitioner, PartitionSet<CubeData> others)
+		public MoveCubeTask(PositionHasher hasher, BucketSet<CubeData> others)
 		{
-			this.partitioner = partitioner;
+			this.hasher = hasher;
 			this.others = others;
 		}
 
 		public void Execute(ref CubeData data)
 		{
-			//Avoid others in our partition
-			int partition = partitioner.Partition(data.Position);
-			SubArray<CubeData> neighbours = others.Get(partition);
+			//Avoid others in our cell
+			int hash = hasher.Hash(data.Position);
+			SubArray<CubeData> neighbours = others.Get(hash);
 			if(neighbours != null)
 			{
 				for (int i = 0; i < neighbours.Count; i++)

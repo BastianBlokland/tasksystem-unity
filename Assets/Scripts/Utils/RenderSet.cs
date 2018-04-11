@@ -22,11 +22,11 @@ namespace Utils
 		}
 
 		/// <summary>
-		/// Important note: Every partition can only contain a maximum of 1023 elements!
+		/// Important note: Every cell can only contain a maximum of 1023 elements!
 		/// </summary>
-		public void Add(int partition, Matrix4x4 matrix)
+		public void Add(int hash, Matrix4x4 matrix)
 		{
-			SubArray<Matrix4x4> chunk = chunks.GetOrAdd(partition, (key) => new SubArray<Matrix4x4>(CHUNK_SIZE) );
+			SubArray<Matrix4x4> chunk = chunks.GetOrAdd(hash, (key) => new SubArray<Matrix4x4>(CHUNK_SIZE) );
 			
 			//NOTE: Very important to realize that we DON'T render the object if there is no space in the chunk anymore
 			chunk.Add(matrix);

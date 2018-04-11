@@ -17,7 +17,7 @@ namespace Sample
 		[SerializeField] private int batchSize = 100;
 		[SerializeField] private int cubeCount = 35000;
 		[SerializeField] private Vector2 spawnAreaSize = new Vector2(200f, 200f);
-		[SerializeField] private float avoidancePartitionSize = 2f;
+		[SerializeField] private float avoidanceCellSize = 2f;
 		[SerializeField] private int avoidanceMaxNeighbourCount = 25; //Note: Cannot change on the fly
 		[SerializeField] private float cubeRadius = 1.25f;
 		[SerializeField] private float cubeSeperationForce = 2f;
@@ -26,22 +26,22 @@ namespace Sample
 		[SerializeField] private float targetSeperationForce = 15f;
 		[SerializeField] private float targetVeloInheritance = 1f;
 		[SerializeField] private float maxDistanceBeforeRespawn = 200f;
-		[SerializeField] private float renderPartitionSize = 10f;
+		[SerializeField] private float renderCellSize = 10f;
 
 		//---> Buffers
 		private CubeData[] cubeData;
-		private PartitionSet<CubeData> partitionedCubes;
+		private BucketSet<CubeData> bucketedCubes;
 		private RenderSet renderSet;
 
 		//---> Misc
 		private TaskManager taskManager;
-		private GridPartitioner avoidancePartitioner;
-		private GridPartitioner renderPartitioner;
+		private PositionHasher avoidanceHasher;
+		private PositionHasher renderHasher;
 		private IRandomProvider random;
 
 		//---> Tasks
 		private StartFrameTask startTask;
-		private PartitionCubeTask partitionCubeTask;
+		private BucketCubeTask bucketCubeTask;
 		private MoveCubeTask moveCubeTask;
 		private RespawnCubeTask respawnCubeTask;
 		private AddToRenderSetTask addToRenderSetTask;
@@ -56,7 +56,7 @@ namespace Sample
 		//---> Profiling tracks
 		private TimelineTrack mainProfilerTrack;
 		private TimelineTrack completeProfilerTrack;
-		private TaskTimelineTrack partitionCubesProfilerTrack;
+		private TaskTimelineTrack bucketCubesProfilerTrack;
 		private TaskTimelineTrack moveCubesProfilerTrack;
 		private TaskTimelineTrack respawnCubesProfilerTrack;
 		private TaskTimelineTrack addToRenderSetProfilerTrack;
@@ -69,30 +69,30 @@ namespace Sample
 			
 			//Allocate arrays
 			cubeData = new CubeData[cubeCount];
-			partitionedCubes = new PartitionSet<CubeData>(maxPartitionEntryCount: avoidanceMaxNeighbourCount);
+			bucketedCubes = new BucketSet<CubeData>(maxBucketSize: avoidanceMaxNeighbourCount);
 			renderSet = new RenderSet(mesh, material);
 
 			//Create misc stuff
 			int numExecutors = useMultiThreading ? (System.Environment.ProcessorCount - 1) : 0;
 			Debug.Log(string.Format("[SampleController] Staring 'TaskManager' with '{0}' executors", numExecutors));
 			taskManager = new TaskManager(numExecutors);
-			avoidancePartitioner = new GridPartitioner();
-			renderPartitioner = new GridPartitioner();
+			avoidanceHasher = new PositionHasher();
+			renderHasher = new PositionHasher();
 			random = new ShiftRandomProvider();
 
 			//Create tasks
 			startTask = new StartFrameTask();
-			partitionCubeTask = new PartitionCubeTask(partitionedCubes, avoidancePartitioner);
-			moveCubeTask = new MoveCubeTask(avoidancePartitioner, partitionedCubes);
+			bucketCubeTask = new BucketCubeTask(bucketedCubes, avoidanceHasher);
+			moveCubeTask = new MoveCubeTask(avoidanceHasher, bucketedCubes);
 			respawnCubeTask = new RespawnCubeTask(random);
-			addToRenderSetTask = new AddToRenderSetTask(renderSet, renderPartitioner);
+			addToRenderSetTask = new AddToRenderSetTask(renderSet, renderHasher);
 
 			//Setup profiler timeline
 			if(profiler != null)
 			{
 				mainProfilerTrack = profiler.CreateTrack<TimelineTrack>("SampleController Update-method");
 				completeProfilerTrack = profiler.CreateTrack<TimelineTrack>("Completing on main-thread");
-				partitionCubesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Partition cubes");
+				bucketCubesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Bucket cubes");
 				moveCubesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Move cubes");
 				respawnCubesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Respawn cubes");
 				addToRenderSetProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Creating render-set");
@@ -131,8 +131,8 @@ namespace Sample
 			}
 
 			//---> Update the tasks with info from the inspector
-			avoidancePartitioner.PartitionSize = avoidancePartitionSize;
-			avoidancePartitioner.Fuzz = random.GetNext(); //Apply random fuzz to make the grid less noticable
+			avoidanceHasher.CellSize = avoidanceCellSize;
+			avoidanceHasher.Fuzz = random.GetNext(); //Apply random fuzz to make the grid less noticable
 			moveCubeTask.CubeRadius = cubeRadius;
 			moveCubeTask.CubeSeperationForce = cubeSeperationForce;
 			moveCubeTask.CubeVeloInheritance = cubeVeloInheritance;
@@ -144,10 +144,10 @@ namespace Sample
 			moveCubeTask.TargetVelocity = targetVelocity;
 			respawnCubeTask.MaxDistance = maxDistanceBeforeRespawn;
 			respawnCubeTask.RespawnArea = MathUtils.FromCenterAndSize(Vector2.zero, spawnAreaSize);
-			renderPartitioner.PartitionSize = renderPartitionSize;
+			renderHasher.CellSize = renderCellSize;
 
 			//---> Clear some data from the previous frame
-			partitionedCubes.Clear();
+			bucketedCubes.Clear();
 
 			//---> Schedule tasks for this frame
 			//NOTE: there is no safety yet, so you manually need to check what resources the taska are 
@@ -156,20 +156,20 @@ namespace Sample
 			(
 				task: startTask
 			);
-			IDependency partitionCubesDep = taskManager.ScheduleArray
+			IDependency bucketCubesDep = taskManager.ScheduleArray
 			(
 				data: cubeData, 
-				task: partitionCubeTask, 
+				task: bucketCubeTask, 
 				batchSize: batchSize,
 				dependency: startDep,
-				tracker: partitionCubesProfilerTrack
+				tracker: bucketCubesProfilerTrack
 			);
 			IDependency updateCubeDep = taskManager.ScheduleArray
 			(
 				data: cubeData, 
 				task: moveCubeTask, 
 				batchSize: batchSize, 
-				dependency: partitionCubesDep, 
+				dependency: bucketCubesDep, 
 				tracker: moveCubesProfilerTrack
 			);
 			IDependency respawnCubesDep = taskManager.ScheduleArray
