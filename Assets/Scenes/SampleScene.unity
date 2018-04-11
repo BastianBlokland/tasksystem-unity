@@ -303,9 +303,9 @@ MonoBehaviour:
   targetTrans: {fileID: 1592471118}
   useMultiThreading: 1
   batchSize: 50
-  cubeCount: 50000
+  cubeCount: 100000
   spawnAreaSize: {x: 400, y: 400}
-  avoidancePartitionSize: 6
+  avoidanceCellSize: 2
   avoidanceMaxNeighbourCount: 4
   cubeRadius: 1
   cubeSeperationForce: 1
@@ -314,7 +314,8 @@ MonoBehaviour:
   targetSeperationForce: 15
   targetVeloInheritance: 1
   maxDistanceBeforeRespawn: 300
-  renderPartitionSize: 25
+  maxRenderBatches: 500
+  renderCellSize: 1
 --- !u!4 &1249463138
 Transform:
   m_ObjectHideFlags: 0

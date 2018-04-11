@@ -27,7 +27,7 @@ namespace Sample
 		[SerializeField] private float targetVeloInheritance = 1f;
 		[SerializeField] private float maxDistanceBeforeRespawn = 200f;
 		[SerializeField] private int maxRenderBatches = 500;
-		[SerializeField] private float renderCellSize = 10f;		
+		[SerializeField] private float renderCellSize = 1f;		
 
 		//---> Buffers
 		private CubeData[] cubeData;
@@ -55,8 +55,8 @@ namespace Sample
 		private Vector2 targetVelocity;
 
 		//---> Profiling tracks
-		private TimelineTrack mainProfilerTrack;
 		private TimelineTrack completeProfilerTrack;
+		private TimelineTrack renderProfilerTrack;
 		private TaskTimelineTrack bucketCubesProfilerTrack;
 		private TaskTimelineTrack moveCubesProfilerTrack;
 		private TaskTimelineTrack respawnCubesProfilerTrack;
@@ -91,12 +91,12 @@ namespace Sample
 			//Setup profiler timeline
 			if(profiler != null)
 			{
-				mainProfilerTrack = profiler.CreateTrack<TimelineTrack>("SampleController Update-method");
-				completeProfilerTrack = profiler.CreateTrack<TimelineTrack>("Completing on main-thread");
+				completeProfilerTrack = profiler.CreateTrack<TimelineTrack>("Blocking main-thread to complete tasks");
+				renderProfilerTrack = profiler.CreateTrack<TimelineTrack>("Render instanced");
 				bucketCubesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Bucket cubes");
 				moveCubesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Move cubes");
 				respawnCubesProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Respawn cubes");
-				addToRenderSetProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Creating render-set");
+				addToRenderSetProfilerTrack = profiler.CreateTrack<TaskTimelineTrack>("Creating render batches");
 				profiler.StartTimers();
 			}
 
@@ -110,8 +110,6 @@ namespace Sample
 		{
 			if(taskManager == null)
 				return;
-
-			mainProfilerTrack.LogStartWork();
 
 			//---> Update target info based on the linked-in transform
 			UpdateTargetInfo();
@@ -127,8 +125,12 @@ namespace Sample
 				completeProfilerTrack.LogEndWork();
 				
 				//Render the results from the previous tasks
-				renderSet.Render();
-				renderSet.Clear();
+				renderProfilerTrack.LogStartWork();
+				{
+					renderSet.Render();
+					renderSet.Clear();
+				}
+				renderProfilerTrack.LogEndWork();
 			}
 
 			//---> Update the tasks with info from the inspector
@@ -192,8 +194,6 @@ namespace Sample
 
 			//---> Setup the finish dependency
 			completeDependency = addToRenderSetDep;
-
-			mainProfilerTrack.LogEndWork();
 		}
 
 		protected void OnDestroy()
