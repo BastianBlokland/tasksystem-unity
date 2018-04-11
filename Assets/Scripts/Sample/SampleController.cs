@@ -26,7 +26,8 @@ namespace Sample
 		[SerializeField] private float targetSeperationForce = 15f;
 		[SerializeField] private float targetVeloInheritance = 1f;
 		[SerializeField] private float maxDistanceBeforeRespawn = 200f;
-		[SerializeField] private float renderCellSize = 10f;
+		[SerializeField] private int maxRenderBatches = 500;
+		[SerializeField] private float renderCellSize = 10f;		
 
 		//---> Buffers
 		private CubeData[] cubeData;
@@ -70,7 +71,7 @@ namespace Sample
 			//Allocate arrays
 			cubeData = new CubeData[cubeCount];
 			bucketedCubes = new BucketSet<CubeData>(maxBucketSize: avoidanceMaxNeighbourCount);
-			renderSet = new RenderSet(mesh, material);
+			renderSet = new RenderSet(mesh, material, maxBatches: maxRenderBatches);
 
 			//Create misc stuff
 			int numExecutors = useMultiThreading ? (System.Environment.ProcessorCount - 1) : 0;
