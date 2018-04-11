@@ -14,7 +14,7 @@ namespace Utils
 	{
 		public readonly ReaderWriterLockSlim ThreadLock = new ReaderWriterLockSlim();
 		public readonly T[] Data;
-		public int Count;
+		public volatile int Count;
 
 		public SubArray(int capacity)
 		{
@@ -36,11 +36,8 @@ namespace Utils
 
 		public void Clear()
 		{
-			ThreadLock.EnterWriteLock();
-			{
-				Count = 0;
-			}
-			ThreadLock.ExitWriteLock();
+			//This is fine as 32 bit value type writes are guaranteed to be atomic
+			Count = 0;
 		}
 	}
 }
