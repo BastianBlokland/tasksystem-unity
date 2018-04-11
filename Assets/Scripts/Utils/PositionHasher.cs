@@ -37,7 +37,7 @@ namespace Utils
 		{
 			float resultFloat = (value + cellSize * fuzz) / cellSize;
 
-			//Note: Push away from 0 as we don't want partition 0 (it will make the above logic for Vector2's fail)
+			//Note: Push away from 0 as we don't want hash 0 (it will make the above logic for Vector2's fail)
 			if(resultFloat > 0)
 				resultFloat += 1f;
 			else
