@@ -7,8 +7,8 @@ namespace Tasks
 	public class TaskRunner : IDisposable
 	{
 		//----> Syncing data
-		private volatile bool abort;
-		private readonly ConcurrentQueue<TaskActionInfo> actionQueue = new ConcurrentQueue<TaskActionInfo>();
+		private readonly CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
+		private readonly BlockingCollection<TaskActionInfo> actionQueue = new BlockingCollection<TaskActionInfo>();
 
 		public TaskRunner(int executorCount)
 		{
@@ -22,13 +22,13 @@ namespace Tasks
 
 		public void Schedule(IExecutor executor, int minIndex, int maxIndex)
 		{
-			actionQueue.Enqueue(new TaskActionInfo(executor, minIndex, maxIndex));
+			actionQueue.Add(new TaskActionInfo(executor, minIndex, maxIndex));
 		}
 
 		public void Help()
 		{
 			TaskActionInfo action;
-			if(actionQueue.TryDequeue(out action))
+			if(actionQueue.TryTake(out action))
 			{
 				try { action.Execute(); }
 				catch(Exception) { }
@@ -37,20 +37,17 @@ namespace Tasks
 
 		public void Dispose()
 		{
-			abort = true;
+			cancelTokenSource.Cancel();
 		}
 
 		//----> RUNNING ON SEPARATE THREAD
 		private void ThreadExecutor()
 		{
-			while(!abort)
+			while(!cancelTokenSource.IsCancellationRequested)
 			{
-				TaskActionInfo action;
-				if(actionQueue.TryDequeue(out action))
-				{
-					try { action.Execute(); }
-					catch(Exception) { }
-				}
+				TaskActionInfo action = actionQueue.Take(cancelTokenSource.Token);
+				try { action.Execute(); }
+				catch(Exception) { }
 			}
 		}
 		//----> RUNNING ON SEPARATE THREAD
