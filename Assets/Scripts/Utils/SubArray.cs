@@ -12,7 +12,7 @@ namespace Utils
 	public class SubArray<T>
 		where T : struct
 	{
-		public readonly ReaderWriterLockSlim ThreadLock = new ReaderWriterLockSlim();
+		public readonly object LockObject = new object();
 		public readonly T[] Data;
 		public volatile int Count;
 
@@ -23,7 +23,7 @@ namespace Utils
 
 		public void Add(T data)
 		{
-			ThreadLock.EnterWriteLock();
+			lock(LockObject)
 			{
 				if(Count < Data.Length)
 				{
@@ -31,7 +31,6 @@ namespace Utils
 					Count++;
 				}
 			}
-			ThreadLock.ExitWriteLock();
 		}
 
 		public void Clear()
