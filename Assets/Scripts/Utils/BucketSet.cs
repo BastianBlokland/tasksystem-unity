@@ -9,31 +9,60 @@ namespace Utils
 	public class BucketSet<T>
 		where T : struct
 	{
-		private readonly SubArray<T>[] buckets = new SubArray<T>[10000];
+		private readonly int bucketCount;
+		private readonly int maxBucketSize;
+		private readonly T[] data;
+		private readonly int[] bucketSizes;
+		private readonly object[] writeLocks;
 
-		public BucketSet(int maxBucketSize = 100)
+		public BucketSet(int bucketCount = 10000, int maxBucketSize = 10)
 		{
-			for (int i = 0; i < buckets.Length; i++)
-				buckets[i] = new SubArray<T>(maxBucketSize);
+			this.bucketCount = bucketCount;
+			this.maxBucketSize = maxBucketSize;
+
+			data = new T[bucketCount * maxBucketSize];
+
+			bucketSizes = new int[bucketCount];
+			for (int i = 0; i < bucketSizes.Length; i++)
+				bucketSizes[i] = 0;
+
+			writeLocks = new object[bucketCount];
+			for (int i = 0; i < bucketSizes.Length; i++)
+				writeLocks[i] = new object();
 		}
 
-		public void Add(int hash, T data)
+		public void Add(int hash, T item)
 		{
-			SubArray<T> bucket = Get(hash);
-			if(bucket != null)
-				bucket.Add(data);
+			int bucketNum = HashUtils.GetBucket(hash, bucketCount);
+
+			if(bucketSizes[bucketNum] < maxBucketSize)
+			{
+				lock(writeLocks[bucketNum])
+				{
+					int index = bucketNum * maxBucketSize + bucketSizes[bucketNum];
+					data[index] = item;
+					bucketSizes[bucketNum]++;
+				}
+			}
 		}
 
-		public SubArray<T> Get(int hash)
+		public int GetBucketSize(int hash)
 		{
-			int bucketNum = HashUtils.GetBucket(hash, buckets.Length);
-			return buckets[bucketNum];
+			int bucketNum = HashUtils.GetBucket(hash, bucketCount);
+			return bucketSizes[bucketNum];
+		}
+
+		public T GetBucketElement(int hash, int index)
+		{
+			int bucketNum = HashUtils.GetBucket(hash, bucketCount);
+			int startIndex = bucketNum * maxBucketSize;
+			return data[startIndex + index];
 		}
 
 		public void Clear()
 		{
-			for (int i = 0; i < buckets.Length; i++)
-				buckets[i].Clear();
+			for (int i = 0; i < bucketSizes.Length; i++)
+				bucketSizes[i] = 0;
 		}
 	}
 }

@@ -302,19 +302,20 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: cffd92310e1b844d7a51a4d639a761c6, type: 2}
   targetTrans: {fileID: 1592471118}
   useMultiThreading: 1
-  batchSize: 50
+  batchSize: 75
   cubeCount: 100000
   spawnAreaSize: {x: 400, y: 400}
   avoidanceCellSize: 2
-  avoidanceMaxNeighbourCount: 4
+  avoidanceBucketCount: 35000
+  avoidanceMaxBucketSize: 5
   cubeRadius: 1
   cubeSeperationForce: 1
   cubeVeloInheritance: 0.6
-  targetRadius: 5
+  targetRadius: 7
   targetSeperationForce: 15
   targetVeloInheritance: 1
   maxDistanceBeforeRespawn: 300
-  maxRenderBatches: 500
+  maxRenderBatches: 400
   renderCellSize: 1
 --- !u!4 &1249463138
 Transform:

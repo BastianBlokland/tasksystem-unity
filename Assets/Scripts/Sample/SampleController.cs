@@ -18,7 +18,8 @@ namespace Sample
 		[SerializeField] private int cubeCount = 35000;
 		[SerializeField] private Vector2 spawnAreaSize = new Vector2(200f, 200f);
 		[SerializeField] private float avoidanceCellSize = 2f;
-		[SerializeField] private int avoidanceMaxNeighbourCount = 25; //Note: Cannot change on the fly
+		[SerializeField] private int avoidanceBucketCount = 10000;
+		[SerializeField] private int avoidanceMaxBucketSize = 10;
 		[SerializeField] private float cubeRadius = 1.25f;
 		[SerializeField] private float cubeSeperationForce = 2f;
 		[SerializeField] private float cubeVeloInheritance = .75f;
@@ -70,7 +71,7 @@ namespace Sample
 			
 			//Allocate arrays
 			cubeData = new CubeData[cubeCount];
-			bucketedCubes = new BucketSet<CubeData>(maxBucketSize: avoidanceMaxNeighbourCount);
+			bucketedCubes = new BucketSet<CubeData>(bucketCount: avoidanceBucketCount, maxBucketSize: avoidanceMaxBucketSize);
 			renderSet = new RenderSet(mesh, material, maxBatches: maxRenderBatches);
 
 			//Create misc stuff

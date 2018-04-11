@@ -18,29 +18,28 @@ namespace Sample
 		public Vector2 TargetVelocity;
 		
 		private readonly PositionHasher hasher;
-		private readonly BucketSet<CubeData> others;
+		private readonly BucketSet<CubeData> cubeLookup;
 
-		public MoveCubeTask(PositionHasher hasher, BucketSet<CubeData> others)
+		public MoveCubeTask(PositionHasher hasher, BucketSet<CubeData> cubeLookup)
 		{
 			this.hasher = hasher;
-			this.others = others;
+			this.cubeLookup = cubeLookup;
 		}
 
 		public void Execute(ref CubeData data)
 		{
 			//Avoid others in our cell
 			int hash = hasher.Hash(data.Position);
-			SubArray<CubeData> neighbours = others.Get(hash);
-			if(neighbours != null)
+			int neighbourAmount = cubeLookup.GetBucketSize(hash);
+			for (int i = 0; i < neighbourAmount; i++)
 			{
-				for (int i = 0; i < neighbours.Count; i++)
-				{
-					//Skip ourselves
-					if(neighbours.Data[i].ID == data.ID)
-						continue;
+				CubeData neighbour = cubeLookup.GetBucketElement(hash, i);
+				
+				//Skip ourselves
+				if(neighbour.ID == data.ID)
+					continue;
 
-					Avoid(ref data, neighbours.Data[i].Position, CubeRadius, neighbours.Data[i].Velocity, CubeSeperationForce, CubeVeloInheritance);
-				}
+				Avoid(ref data, neighbour.Position, CubeRadius, neighbour.Velocity, CubeSeperationForce, CubeVeloInheritance);
 			}
 
 			//Avoid the target
