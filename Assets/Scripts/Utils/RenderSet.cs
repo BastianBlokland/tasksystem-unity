@@ -27,19 +27,16 @@ namespace Utils
 		public void Add(int partition, Matrix4x4 matrix)
 		{
 			SubArray<Matrix4x4> chunk = chunks.GetOrAdd(partition, (key) => new SubArray<Matrix4x4>(CHUNK_SIZE) );
-			lock(chunk)
-			{
-				//NOTE: Very important to realize that we DON'T render the object if there is no space in the chunk anymore
-				chunk.Add(matrix);
-			}
+			
+			//NOTE: Very important to realize that we DON'T render the object if there is no space in the chunk anymore
+			chunk.Add(matrix);
 		}
 
 		public void Clear()
 		{
 			foreach(KeyValuePair<int, SubArray<Matrix4x4>> kvp in chunks)
 			{
-				lock(kvp.Value)
-					kvp.Value.Clear();
+				kvp.Value.Clear();
 			}
 		}
 
@@ -52,11 +49,12 @@ namespace Utils
 				
 			foreach(KeyValuePair<int, SubArray<Matrix4x4>> kvp in chunks)
 			{
-				lock(kvp.Value)
+				kvp.Value.ThreadLock.EnterReadLock();
 				{
 					if(kvp.Value.Count > 0)
 						Graphics.DrawMeshInstanced(mesh, 0, material, kvp.Value.Data, kvp.Value.Count);
 				}
+				kvp.Value.ThreadLock.ExitReadLock();
 			}
 		}
 	}

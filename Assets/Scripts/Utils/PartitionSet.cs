@@ -24,12 +24,7 @@ namespace Utils
 		{
 			SubArray<T> bucket = Get(partition);
 			if(bucket != null)
-			{
-				lock(bucket)
-				{
-					bucket.Add(data);
-				}
-			}
+				bucket.Add(data);
 		}
 
 		public SubArray<T> Get(int partition)
@@ -41,12 +36,7 @@ namespace Utils
 		public void Clear()
 		{
 			for (int i = 0; i < buckets.Length; i++)
-			{
-				lock(buckets[i])
-				{
-					buckets[i].Clear();
-				}
-			}
+				buckets[i].Clear();
 		}
 
 		private static int GetBucket(int hashcode, int bucketCount)
