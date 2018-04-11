@@ -9,6 +9,7 @@ namespace Sample
 	{
 		public float MaxDistance = 200f;
 		public Rect RespawnArea = new Rect(Vector2.zero, new Vector2(200f, 200f));
+		public float RespawnForce = 1f;
 
 		private readonly IRandomProvider random;
 
@@ -25,7 +26,7 @@ namespace Sample
 				{
 					ID = data.ID,
 					Position = random.Inside(RespawnArea),
-					Velocity = Vector2.zero
+					Velocity = random.Direction() * RespawnForce
 				};
 			}	
 		}

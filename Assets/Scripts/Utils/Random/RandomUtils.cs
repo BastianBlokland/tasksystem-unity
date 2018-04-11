@@ -13,6 +13,14 @@ namespace Utils
 			);
 		}
 
+		public static Vector2 Direction(this IRandomProvider random)
+		{
+			Vector2 dir = new Vector2(random.GetNext() - .5f, random.GetNext() - .5f);
+			if(dir == Vector2.zero) //Should be very rare
+				return Vector2.up;
+			return MathUtils.FastNormalize(dir);
+		}
+
 		public static int Between(this IRandomProvider random, int minValue, int maxValue)
 		{
 			return Mathf.FloorToInt(random.Between((float)minValue, (float)maxValue));

@@ -170,7 +170,7 @@ Camera:
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_RenderingPath: -1
+  m_RenderingPath: 1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
   m_TargetEye: 3
@@ -303,19 +303,21 @@ MonoBehaviour:
   targetTrans: {fileID: 1592471118}
   useMultiThreading: 1
   batchSize: 75
-  cubeCount: 100000
+  cubeCount: 75000
   spawnAreaSize: {x: 400, y: 400}
   avoidanceCellSize: 2
   avoidanceBucketCount: 35000
-  avoidanceMaxBucketSize: 5
+  avoidanceMaxBucketSize: 4
   cubeRadius: 1
-  cubeSeperationForce: 1
+  cubeSeperationForce: 2
   cubeVeloInheritance: 0.6
   targetRadius: 7
   targetSeperationForce: 15
-  targetVeloInheritance: 1
+  targetVeloInheritance: 0.8
   maxDistanceBeforeRespawn: 300
-  maxRenderBatches: 400
+  respawnAreaSize: {x: 10, y: 10}
+  respawnForce: 35
+  maxRenderBatches: 350
   renderCellSize: 1
 --- !u!4 &1249463138
 Transform:

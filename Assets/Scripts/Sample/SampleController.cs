@@ -27,6 +27,8 @@ namespace Sample
 		[SerializeField] private float targetSeperationForce = 15f;
 		[SerializeField] private float targetVeloInheritance = 1f;
 		[SerializeField] private float maxDistanceBeforeRespawn = 200f;
+		[SerializeField] private Vector2 respawnAreaSize = new Vector2(200f, 200f);
+		[SerializeField] private float respawnForce = 1f;
 		[SerializeField] private int maxRenderBatches = 500;
 		[SerializeField] private float renderCellSize = 1f;		
 
@@ -147,7 +149,8 @@ namespace Sample
 			moveCubeTask.TargetPosition = targetPosition;
 			moveCubeTask.TargetVelocity = targetVelocity;
 			respawnCubeTask.MaxDistance = maxDistanceBeforeRespawn;
-			respawnCubeTask.RespawnArea = MathUtils.FromCenterAndSize(Vector2.zero, spawnAreaSize);
+			respawnCubeTask.RespawnArea = MathUtils.FromCenterAndSize(Vector2.zero, respawnAreaSize);
+			respawnCubeTask.RespawnForce = respawnForce;
 			renderHasher.CellSize = renderCellSize;
 
 			//---> Clear some data from the previous frame
