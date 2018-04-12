@@ -14,22 +14,26 @@ namespace Utils
 		private volatile bool renderLock;
 		private readonly Mesh mesh;
 		private readonly Material material;
-		private readonly SubArray<Matrix4x4>[] batches;
+		private readonly Matrix4x4[][] batches;
+		private readonly int[] batchSizes;
 
 		public RenderSet(Mesh mesh, Material material, int maxBatches)
 		{
 			this.mesh = mesh;
 			this.material = material;
 
-			UnityEngine.Debug.Log("max: " + maxBatches);
-
-			batches = new SubArray<Matrix4x4>[maxBatches];
+			batches = new Matrix4x4[maxBatches][];
+			batchSizes = new int[maxBatches];
 			for (int i = 0; i < maxBatches; i++)
-				batches[i] = new SubArray<Matrix4x4>(BATCH_SIZE);
+			{
+				batches[i] = new Matrix4x4[BATCH_SIZE];
+				batchSizes[i] = 0;
+			}
 		}
 
 		/// <summary>
-		/// Important note: Every cell can only contain a maximum of 1023 elements!
+		/// NOTE: ONLY writing to the DIFFERENT batchNum's is threadsafe, so write to 1 batchNum per thread
+		/// NOTE2: Every batch can only contain a maximum of 1023 elements!
 		/// </summary>
 		public void Add(int batchNum, Matrix4x4 matrix)
 		{
@@ -37,16 +41,17 @@ namespace Utils
 			if(renderLock)
 				return;
 
-			SubArray<Matrix4x4> batch = batches[batchNum];
-			
-			//NOTE: Very important to realize that we DON'T render the object if there is no space in the batch anymore
-			batch.Add(matrix);
+			if(batchSizes[batchNum] < BATCH_SIZE)
+			{
+				batches[batchNum][batchSizes[batchNum]] = matrix;
+				batchSizes[batchNum]++;
+			}
 		}
 
 		public void Clear()
 		{
-			for (int i = 0; i < batches.Length; i++)
-				batches[i].Clear();
+			for (int i = 0; i < batchSizes.Length; i++)
+				batchSizes[i] = 0;
 		}
 
 		public void Render()
@@ -61,9 +66,9 @@ namespace Utils
 			renderLock = true;
 			for (int i = 0; i < batches.Length; i++)
 			{
-				if(batches[i].Count > 0)
+				if(batchSizes[i] > 0)
 				{
-					Graphics.DrawMeshInstanced(mesh, 0, material, batches[i].Data, batches[i].Count);
+					Graphics.DrawMeshInstanced(mesh, 0, material, batches[i], batchSizes[i]);
 				}
 			}
 			renderLock = false;
