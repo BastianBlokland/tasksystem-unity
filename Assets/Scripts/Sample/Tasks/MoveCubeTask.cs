@@ -26,7 +26,7 @@ namespace Sample
 			this.cubeLookup = cubeLookup;
 		}
 
-		public void Execute(ref CubeData data)
+		public void Execute(ref CubeData data, int index, int batch)
 		{
 			//Avoid others in our cell
 			int hash = hasher.Hash(data.Position);

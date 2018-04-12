@@ -2,6 +2,6 @@ namespace Tasks
 {
 	public interface IExecutor
 	{
-		void ExecuteElement(int index);
+		void ExecuteElement(int index, int batch);
 	}
 }

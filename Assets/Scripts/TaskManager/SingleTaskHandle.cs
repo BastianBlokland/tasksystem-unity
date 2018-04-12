@@ -12,9 +12,9 @@ namespace Tasks
 			this.task = task;
 		}
 
-		protected override void ExecuteTask(int index)
+		protected override void ExecuteTask(int index, int batch)
 		{
-			task.Execute();
+			task.Execute(index, batch);
 		}
 	}
 }

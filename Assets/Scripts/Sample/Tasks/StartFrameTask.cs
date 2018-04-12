@@ -7,7 +7,7 @@ namespace Sample
 {
 	public class StartFrameTask : ITask
 	{
-		public void Execute()
+		public void Execute(int index, int batch)
 		{
 			
 		}

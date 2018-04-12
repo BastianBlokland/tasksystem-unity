@@ -16,7 +16,7 @@ namespace Sample
 			this.hasher = hasher;
 		}
 
-		public void Execute(ref CubeData cubeData)
+		public void Execute(ref CubeData cubeData, int index, int batch)
 		{
 			int hash = hasher.Hash(cubeData.Position);
 			bucketSet.Add(hash, cubeData);

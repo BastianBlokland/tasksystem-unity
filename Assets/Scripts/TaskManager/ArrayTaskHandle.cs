@@ -15,9 +15,9 @@ namespace Tasks
 			this.task = task;
 		}
 
-		protected override void ExecuteTask(int index)
+		protected override void ExecuteTask(int index, int batch)
 		{
-			task.Execute(ref data[index]);
+			task.Execute(ref data[index], index, batch);
 		}
 	}
 
@@ -40,9 +40,9 @@ namespace Tasks
 				throw new Exception("[ArrayTaskHandle] Both input arrays MUST have the same length");
 		}
 
-		protected override void ExecuteTask(int index)
+		protected override void ExecuteTask(int index, int batch)
 		{
-			task.Execute(ref data1[index], ref data2[index]);
+			task.Execute(ref data1[index], ref data2[index], index, batch);
 		}
 	}
 }

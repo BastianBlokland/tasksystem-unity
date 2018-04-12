@@ -18,7 +18,7 @@ namespace Sample
 			this.random = random;
 		}
 
-		public void Execute(ref CubeData data)
+		public void Execute(ref CubeData data, int index, int batch)
 		{
 			if(data.Position.sqrMagnitude > MaxDistance * MaxDistance)
 			{

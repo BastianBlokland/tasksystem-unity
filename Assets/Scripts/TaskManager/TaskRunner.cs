@@ -20,9 +20,9 @@ namespace Tasks
 			}
 		}
 
-		public void Schedule(IExecutor executor, int minIndex, int maxIndex)
+		public void Schedule(IExecutor executor, int minIndex, int maxIndex, int batch)
 		{
-			actionQueue.Add(new TaskActionInfo(executor, minIndex, maxIndex));
+			actionQueue.Add(new TaskActionInfo(executor, minIndex, maxIndex, batch));
 		}
 
 		public void Help()

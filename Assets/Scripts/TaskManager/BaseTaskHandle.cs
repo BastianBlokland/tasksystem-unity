@@ -31,22 +31,24 @@ namespace Tasks
 			if(isScheduled)
 				return;
 
+			//NOTE: Fire the scheduled event BEFORE actually scheduling otherwise a task could be completed before
+			//ever firing this event, you gotta love multi-threading :)
+			isScheduled = true;
+			Scheduled();
+
 			//Zero or negative batch-sizes are not really supported :)
 			if(batchSize <= 0) 
 				batchSize = 1;
 
-			//NOTE: Fire the scheduled event BEFORE actually scheduling otherwise a task could be completed before
-			//ever firing this event, you gotta love mult-threading :)
-			isScheduled = true;
-			Scheduled();
-
 			tasksLeft = length;
+			int batch = 0;
 			int startOffset = batchSize - 1;
 			for (int i = 0; i < length; i += batchSize)
 			{
 				int start = i;
 				int end = start + startOffset;
-				runner.Schedule(this, start, end >= length ? (length - 1) : end);
+				runner.Schedule(this, start, end >= length ? (length - 1) : end, batch);
+				batch++;
 			}
 		}
 
@@ -57,9 +59,9 @@ namespace Tasks
 		}
 
 		//----> RUNNING ON SEPARATE THREAD
-		public void ExecuteElement(int index)
+		public void ExecuteElement(int index, int batch)
 		{
-			try { ExecuteTask(index); }
+			try { ExecuteTask(index, batch); }
 			catch(Exception) { }
 
 			if(Interlocked.Decrement(ref tasksLeft) == 0)
@@ -70,6 +72,6 @@ namespace Tasks
 		}
 		//----> RUNNING ON SEPARATE THREAD
 
-		protected abstract void ExecuteTask(int index);
+		protected abstract void ExecuteTask(int index, int batch);
 	}
 }
