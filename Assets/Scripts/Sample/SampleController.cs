@@ -29,8 +29,6 @@ namespace Sample
 		[SerializeField] private float maxDistanceBeforeRespawn = 200f;
 		[SerializeField] private Vector2 respawnAreaSize = new Vector2(200f, 200f);
 		[SerializeField] private float respawnForce = 1f;
-		[SerializeField] private int maxRenderBatches = 500;
-		[SerializeField] private float renderCellSize = 1f;		
 
 		//---> Buffers
 		private CubeData[] cubeData;
@@ -40,7 +38,6 @@ namespace Sample
 		//---> Misc
 		private TaskManager taskManager;
 		private PositionHasher avoidanceHasher;
-		private PositionHasher renderHasher;
 		private IRandomProvider random;
 
 		//---> Tasks
@@ -74,14 +71,13 @@ namespace Sample
 			//Allocate arrays
 			cubeData = new CubeData[cubeCount];
 			bucketedCubes = new BucketSet<CubeData>(bucketCount: avoidanceBucketCount, maxBucketSize: avoidanceMaxBucketSize);
-			renderSet = new RenderSet(mesh, material, maxBatches: maxRenderBatches);
+			renderSet = new RenderSet(mesh, material, maxBatches: Mathf.CeilToInt(cubeCount / 1023f));
 
 			//Create misc stuff
 			int numExecutors = useMultiThreading ? (System.Environment.ProcessorCount - 1) : 0;
 			Debug.Log(string.Format("[SampleController] Staring 'TaskManager' with '{0}' executors", numExecutors));
 			taskManager = new TaskManager(numExecutors);
 			avoidanceHasher = new PositionHasher();
-			renderHasher = new PositionHasher();
 			random = new ShiftRandomProvider();
 
 			//Create tasks
@@ -89,7 +85,7 @@ namespace Sample
 			bucketCubeTask = new BucketCubeTask(bucketedCubes, avoidanceHasher);
 			moveCubeTask = new MoveCubeTask(avoidanceHasher, bucketedCubes);
 			respawnCubeTask = new RespawnCubeTask(random);
-			addToRenderSetTask = new AddToRenderSetTask(renderSet, renderHasher);
+			addToRenderSetTask = new AddToRenderSetTask(renderSet);
 
 			//Setup profiler timeline
 			if(profiler != null)
@@ -151,7 +147,6 @@ namespace Sample
 			respawnCubeTask.MaxDistance = maxDistanceBeforeRespawn;
 			respawnCubeTask.RespawnArea = MathUtils.FromCenterAndSize(Vector2.zero, respawnAreaSize);
 			respawnCubeTask.RespawnForce = respawnForce;
-			renderHasher.CellSize = renderCellSize;
 
 			//---> Clear some data from the previous frame
 			bucketedCubes.Clear();
@@ -191,7 +186,7 @@ namespace Sample
 			(
 				data: cubeData, 
 				task: addToRenderSetTask, 
-				batchSize: batchSize, 
+				batchSize: RenderSet.BATCH_SIZE, 
 				dependency: respawnCubesDep,
 				tracker: addToRenderSetProfilerTrack
 			);
