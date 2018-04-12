@@ -26,7 +26,9 @@ namespace Sample
 				{
 					ID = data.ID,
 					Position = random.Inside(RespawnArea),
-					Velocity = random.Direction() * RespawnForce
+					Velocity = random.Direction() * RespawnForce,
+					TimeNotHitTarget1 = 999f,
+					TimeNotHitTarget2 = 999f
 				};
 			}	
 		}

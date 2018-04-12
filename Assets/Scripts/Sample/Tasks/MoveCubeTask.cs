@@ -14,8 +14,10 @@ namespace Sample
 		public float TargetSeperationForce = 10f;
 		public float TargetVeloInheritance = 1f;
 		public float DeltaTime = .1f;
-		public Vector2 TargetPosition;
-		public Vector2 TargetVelocity;
+		public Vector2 Target1Position;
+		public Vector2 Target1Velocity;
+		public Vector2 Target2Position;
+		public Vector2 Target2Velocity;
 		
 		private readonly PositionHasher hasher;
 		private readonly BucketSet<CubeData> cubeLookup;
@@ -42,14 +44,23 @@ namespace Sample
 				Avoid(ref data, neighbour.Position, CubeRadius, neighbour.Velocity, CubeSeperationForce, CubeVeloInheritance);
 			}
 
-			//Avoid the target
-			Avoid(ref data, TargetPosition, TargetRadius, TargetVelocity, TargetSeperationForce, TargetVeloInheritance);
+			//Avoid target 1
+			if(Avoid(ref data, Target1Position, TargetRadius, Target1Velocity, TargetSeperationForce, TargetVeloInheritance))
+				data.TimeNotHitTarget1 = 0f;
+			else
+				data.TimeNotHitTarget1 += DeltaTime;
+
+			//Avoid target 2
+			if(Avoid(ref data, Target2Position, TargetRadius, Target2Velocity, TargetSeperationForce, TargetVeloInheritance))
+				data.TimeNotHitTarget2 = 0f;
+			else
+				data.TimeNotHitTarget2 += DeltaTime;
 
 			//Update position
 			data.Position += data.Velocity * DeltaTime;
 		}
 
-		private void Avoid(ref CubeData data, Vector2 point, float pointRadius, Vector2 pointVelocity, float seperationForce, float veloInheritance)
+		private bool Avoid(ref CubeData data, Vector2 point, float pointRadius, Vector2 pointVelocity, float seperationForce, float veloInheritance)
 		{
 			float sharedRadius = CubeRadius + pointRadius;
 			float sharedRadiusSqr = sharedRadius * sharedRadius;
@@ -68,7 +79,10 @@ namespace Sample
 
 				//Inherit velocity from target
 				data.Velocity = Vector2.Lerp(data.Velocity, pointVelocity, overLap * veloInheritance);
+
+				return true;	
 			}
+			return false;
 		}
 	}
 }

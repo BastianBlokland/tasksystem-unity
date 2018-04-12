@@ -12,7 +12,8 @@ namespace Sample
 		[SerializeField] private Timeline profiler;
 		[SerializeField] private Mesh mesh;
 		[SerializeField] private Material material;
-		[SerializeField] private Transform targetTrans;
+		[SerializeField] private Transform target1Trans;
+		[SerializeField] private Transform target2Trans;
 		[SerializeField] private bool useMultiThreading = true;
 		[SerializeField] private int batchSize = 100;
 		[SerializeField] private int cubeCount = 35000;
@@ -29,6 +30,8 @@ namespace Sample
 		[SerializeField] private float maxDistanceBeforeRespawn = 200f;
 		[SerializeField] private Vector2 respawnAreaSize = new Vector2(200f, 200f);
 		[SerializeField] private float respawnForce = 1f;
+		[SerializeField] private Color hitByTarget1Color = Color.red;
+		[SerializeField] private Color hitByTarget2Color = Color.blue;
 
 		//---> Buffers
 		private CubeData[] cubeData;
@@ -51,8 +54,10 @@ namespace Sample
 		private IDependency completeDependency;
 
 		//---> Info about target
-		private Vector2 targetPosition;
-		private Vector2 targetVelocity;
+		private Vector2 target1Position;
+		private Vector2 target1Velocity;
+		private Vector2 target2Position;
+		private Vector2 target2Velocity;
 
 		//---> Profiling tracks
 		private TimelineTrack completeProfilerTrack;
@@ -66,7 +71,6 @@ namespace Sample
 		{
 			if(mesh == null) { Debug.LogError("[SampleController] No 'mesh' provided"); return; }
 			if(material == null) { Debug.LogError("[SampleController] No 'material' provided"); return; }
-			if(targetTrans == null) { Debug.LogError("[SampleController] No 'targetTrans' provided"); return; }
 			
 			//Allocate arrays
 			cubeData = new CubeData[cubeCount];
@@ -102,7 +106,13 @@ namespace Sample
 			//Setup initial data
 			Rect spawnArea = MathUtils.FromCenterAndSize(Vector2.zero, spawnAreaSize);
 			for (int i = 0; i < cubeCount; i++)
-				cubeData[i] = new CubeData { ID = i, Position = random.Inside(spawnArea) };
+				cubeData[i] = new CubeData 
+				{ 
+					ID = i, 
+					Position = random.Inside(spawnArea), 
+					TimeNotHitTarget1 = 999f,
+					TimeNotHitTarget2 = 999f
+				};
 		}
 
 		protected void Update()
@@ -111,7 +121,8 @@ namespace Sample
 				return;
 
 			//---> Update target info based on the linked-in transform
-			UpdateTargetInfo();
+			UpdateTargetInfo(target1Trans, ref target1Position, ref target1Velocity);
+			UpdateTargetInfo(target2Trans, ref target2Position, ref target2Velocity);
 
 			//---> Render the data from the previous tasks
 			if(completeDependency != null)
@@ -142,11 +153,15 @@ namespace Sample
 			moveCubeTask.TargetSeperationForce = targetSeperationForce;
 			moveCubeTask.TargetVeloInheritance = targetVeloInheritance;
 			moveCubeTask.DeltaTime = Time.deltaTime;
-			moveCubeTask.TargetPosition = targetPosition;
-			moveCubeTask.TargetVelocity = targetVelocity;
+			moveCubeTask.Target1Position = target1Position;
+			moveCubeTask.Target1Velocity = target1Velocity;
+			moveCubeTask.Target2Position = target2Position;
+			moveCubeTask.Target2Velocity = target2Velocity;
 			respawnCubeTask.MaxDistance = maxDistanceBeforeRespawn;
 			respawnCubeTask.RespawnArea = MathUtils.FromCenterAndSize(Vector2.zero, respawnAreaSize);
 			respawnCubeTask.RespawnForce = respawnForce;
+			addToRenderSetTask.HitByTarget1Color = hitByTarget1Color;
+			addToRenderSetTask.HitByTarget2Color = hitByTarget2Color;
 
 			//---> Clear some data from the previous frame
 			bucketedCubes.Clear();
@@ -201,9 +216,9 @@ namespace Sample
 				taskManager.Dispose();
 		}
 
-		private void UpdateTargetInfo()
+		private void UpdateTargetInfo(Transform trans, ref Vector2 targetPosition, ref Vector2 targetVelocity)
 		{
-			Vector2 newTargetPos = targetTrans == null ? Vector2.zero : new Vector2(targetTrans.position.x, targetTrans.position.z);
+			Vector2 newTargetPos = trans == null ? Vector2.zero : new Vector2(trans.position.x, trans.position.z);
 			Vector2 targetDiff = newTargetPos - targetPosition;
 			targetPosition = newTargetPos;
 			targetVelocity = targetDiff == Vector2.zero ? Vector2.zero : targetDiff / Time.deltaTime;

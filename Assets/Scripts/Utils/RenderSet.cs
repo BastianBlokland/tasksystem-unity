@@ -8,25 +8,43 @@ namespace Utils
 {
 	public class RenderSet
 	{
+		private struct BatchData
+		{
+			public readonly Matrix4x4[] Matrices;
+			public readonly Vector4[] Colors;
+
+			public BatchData(Matrix4x4[] matrices, Vector4[] colors)
+			{
+				Matrices = matrices;
+				Colors = colors;
+			}
+		}
+
 		//1023, is the max render count for a single call (https://docs.unity3d.com/ScriptReference/Graphics.DrawMeshInstanced.html)
 		public const int BATCH_SIZE = 1023;
 
 		private volatile bool renderLock;
 		private readonly Mesh mesh;
 		private readonly Material material;
-		private readonly Matrix4x4[][] batches;
+		private readonly MaterialPropertyBlock propertyBlock;
+		private readonly BatchData[] batches;
 		private readonly int[] batchSizes;
 
 		public RenderSet(Mesh mesh, Material material, int maxBatches)
 		{
 			this.mesh = mesh;
 			this.material = material;
+			this.propertyBlock = new MaterialPropertyBlock();
 
-			batches = new Matrix4x4[maxBatches][];
+			batches = new BatchData[maxBatches];
 			batchSizes = new int[maxBatches];
 			for (int i = 0; i < maxBatches; i++)
 			{
-				batches[i] = new Matrix4x4[BATCH_SIZE];
+				batches[i] = new BatchData
+				(
+					matrices: new Matrix4x4[BATCH_SIZE],
+					colors: new Vector4[BATCH_SIZE]
+				);
 				batchSizes[i] = 0;
 			}
 		}
@@ -35,7 +53,7 @@ namespace Utils
 		/// NOTE: ONLY writing to the DIFFERENT batchNum's is threadsafe, so write to 1 batchNum per thread
 		/// NOTE2: Every batch can only contain a maximum of 1023 elements!
 		/// </summary>
-		public void Add(int batchNum, Matrix4x4 matrix)
+		public void Add(int batchNum, Matrix4x4 matrix, Color color)
 		{
 			//Not allowed to add more items when we are rendering
 			if(renderLock)
@@ -43,7 +61,9 @@ namespace Utils
 
 			if(batchSizes[batchNum] < BATCH_SIZE)
 			{
-				batches[batchNum][batchSizes[batchNum]] = matrix;
+				int index = batchSizes[batchNum];
+				batches[batchNum].Matrices[index] = matrix;
+				batches[batchNum].Colors[index] = color;
 				batchSizes[batchNum]++;
 			}
 		}
@@ -68,7 +88,8 @@ namespace Utils
 			{
 				if(batchSizes[i] > 0)
 				{
-					Graphics.DrawMeshInstanced(mesh, 0, material, batches[i], batchSizes[i]);
+					propertyBlock.SetVectorArray("_Color", batches[i].Colors);
+					Graphics.DrawMeshInstanced(mesh, 0, material, batches[i].Matrices, batchSizes[i], propertyBlock);
 				}
 			}
 			renderLock = false;
