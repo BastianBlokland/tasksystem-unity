@@ -13,7 +13,7 @@ namespace Utils
 		public ShiftRandomProvider(ushort seed)
 		{
 			lockObject = new object();
-			lfsr = seed > 0 ? seed : (ushort)0; //Seed of 0 is unsupported
+			lfsr = seed > 0 ? seed : (ushort)1; //Seed of 0 is unsupported
 			bit = 0;
 		}
 
