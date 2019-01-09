@@ -1,4 +1,4 @@
-# tasksystem
+# [Retired] Prototype tasksystem
 
 For learning purposes: a prototype task system
 
