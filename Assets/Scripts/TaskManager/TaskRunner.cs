@@ -45,9 +45,16 @@ namespace Tasks
 		{
 			while(!cancelTokenSource.IsCancellationRequested)
 			{
-				TaskActionInfo action = actionQueue.Take(cancelTokenSource.Token);
-				try { action.Execute(); }
-				catch(Exception) { }
+				try
+				{
+					TaskActionInfo action = actionQueue.Take(cancelTokenSource.Token);
+					try { action.Execute(); }
+					catch(Exception) { }
+				}
+				catch(OperationCanceledException)
+				{
+					break;
+				}
 			}
 		}
 		//----> RUNNING ON SEPARATE THREAD
